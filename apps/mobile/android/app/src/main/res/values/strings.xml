@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">B2 Wallet</string>
+    <string name="title_activity_main">B2 Wallet</string>
+    <string name="package_name">com.better2better.b2wallet</string>
+    <string name="custom_url_scheme">com.better2better.b2wallet</string>
+</resources>

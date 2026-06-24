@@ -1,0 +1,118 @@
+# =================================================================------------
+# B2 Wallet - Professional Gitignore Configuration
+# Developed by Better2Better & Diego Oris
+# Standard: Clean, professional, security-first, zero AI/temporary traces.
+# =================================================================------------
+
+# -----------------------------------------------------------------------------
+# 1. Dependency Directories (Caches and Package Managers)
+# -----------------------------------------------------------------------------
+node_modules/
+/node_modules/
+.npm/
+.yarn/
+.pnpm-store/
+package-lock.json.log
+yarn-error.log*
+yarn-debug.log*
+npm-debug.log*
+.pnpm-debug.log*
+
+# -----------------------------------------------------------------------------
+# 2. Build and Compilation Artifacts (Unified Distribution Targets)
+# -----------------------------------------------------------------------------
+dist/
+/dist/
+build/
+/build/
+out/
+/out/
+.turbo/
+.next/
+bin/
+obj/
+b2-wallet-extension/
+b2-wallet-extension
+/b2-wallet-extension/
+
+# -----------------------------------------------------------------------------
+# 3. Rust & WebAssembly Target Directories
+# -----------------------------------------------------------------------------
+target/
+**/target/
+Cargo.lock
+**/*.rs.bk
+pkg/
+doc/target/
+
+# -----------------------------------------------------------------------------
+# 4. Tauri Desktop Framework Artifacts
+# -----------------------------------------------------------------------------
+src-tauri/target/
+src-tauri/binaries/
+apps/desktop/src-tauri/target/
+apps/desktop/src-tauri/binaries/
+
+# -----------------------------------------------------------------------------
+# 5. Capacitor Mobile Public Assets (Synced via build)
+# -----------------------------------------------------------------------------
+ios/App/App/public/
+android/app/src/main/assets/public/
+apps/mobile/ios/App/App/public/
+apps/mobile/android/app/src/main/assets/public/
+capacitor.config.json.bak
+
+# -----------------------------------------------------------------------------
+# 6. IDEs, Editors and Workspaces
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
+*.swo
+.project
+.classpath
+.settings/
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# -----------------------------------------------------------------------------
+# 7. Security, Credentials and Environment Variables (Strict Policy)
+# -----------------------------------------------------------------------------
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+*.pem
+*.key
+*.pub
+*.cert
+*.pfx
+*.p12
+*.jks
+*.keystore
+google-services.json
+GoogleService-Info.plist
+
+# -----------------------------------------------------------------------------
+# 8. Temporary Developer Scratchpads, Testing and Logs
+# -----------------------------------------------------------------------------
+scratch/
+/scratch/
+scratch_svgs.js
+test_decrypt.js
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+
+# -----------------------------------------------------------------------------
+# END OF CONFIGURATION
+# -----------------------------------------------------------------------------

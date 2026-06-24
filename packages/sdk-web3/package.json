@@ -1,0 +1,16 @@
+{
+  "name": "b2-wallet-sdk-web3",
+  "version": "0.1.3",
+  "version_name": "0.1.3 beta",
+  "description": "SDK de Conexão Web3 e Injeção Global da B2 Wallet",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "echo 'Build do SDK completado'",
+    "test": "echo 'Nenhum teste configurado'"
+  },
+  "dependencies": {
+    "b2-wallet-core": "*"
+  },
+  "author": "Diego Oris <better2better.com.br>",
+  "license": "MIT"
+}

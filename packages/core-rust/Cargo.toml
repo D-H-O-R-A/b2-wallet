@@ -1,0 +1,29 @@
+[package]
+name = "b2-wallet-core"
+version = "0.1.3"
+edition = "2021"
+authors = ["Diego Oris <better2better.com.br>"]
+description = "Core Criptográfico de Auto-Custódia em Rust - B2 Wallet"
+
+[lib]
+crate-type = ["cdylib", "staticlib"]
+
+[dependencies]
+wasm-bindgen = "0.2.89"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+aes-gcm = "0.10.3"
+argon2 = { version = "0.5.2", features = ["std"] }
+bip39 = { version = "2.0.0", features = ["rand", "zeroize"] }
+secp256k1 = { version = "0.28.0", features = ["rand", "global-context"] }
+ed25519-dalek = { version = "2.1.0", features = ["zeroize"] }
+rand = "0.8.5"
+getrandom = { version = "0.2.10", features = ["js"] }
+zeroize = { version = "1.7.0", features = ["zeroize_derive"] }
+hex = "0.4.3"
+bs58 = "0.5.0"
+
+[profile.release]
+opt-level = "s" # Otimizado para tamanho de pacote
+lto = true
+codegen-units = 1

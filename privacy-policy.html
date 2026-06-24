@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="pt" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Política de Privacidade - B2 Wallet</title>
+  <style>
+    :root {
+      --font-tech: 'Orbitron', system-ui, -apple-system, sans-serif;
+      --font-body: 'Exo 2', system-ui, -apple-system, sans-serif;
+      --bg-main: #06070a;
+      --bg-gradient: radial-gradient(circle at 50% 0%, #12101e 0%, #06070a 60%);
+      --bg-panel: rgba(13, 15, 22, 0.72);
+      --border-light: rgba(255, 255, 255, 0.07);
+      --color-primary: #f59e0b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+    }
+
+    @import url('https://fonts.googleapis.com/css2?family=Exo+2:wght@300;400;500;600;700;800&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
+
+    body {
+      font-family: var(--font-body);
+      background-color: var(--bg-main);
+      background-image: var(--bg-gradient);
+      background-attachment: fixed;
+      color: var(--text-primary);
+      margin: 0;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: var(--bg-panel);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--border-light);
+      border-radius: 20px;
+      padding: 40px;
+      box-shadow: 0 25px 40px -12px rgba(0, 0, 0, 0.35);
+    }
+
+    h1 {
+      font-family: var(--font-tech);
+      font-size: 2rem;
+      color: var(--color-primary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-top: 0;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--border-light);
+      padding-bottom: 12px;
+    }
+
+    h2 {
+      font-family: var(--font-tech);
+      font-size: 1.25rem;
+      color: var(--color-primary);
+      margin-top: 32px;
+      margin-bottom: 16px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    p, li {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    ul {
+      padding-left: 20px;
+      margin-bottom: 20px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 40px;
+      font-family: var(--font-tech);
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-light);
+      padding-top: 20px;
+    }
+
+    .highlight {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Política de Privacidade</h1>
+    <p>Última atualização: 15 de junho de 2026</p>
+    
+    <p>A <span class="highlight">B2 Wallet</span> é uma carteira digital criptográfica descentralizada e não-custodial de auto-custódia, desenvolvida pela <span class="highlight">Better2Better</span>. Nossa prioridade absoluta é a proteção dos seus ativos digitais e a total soberania das suas chaves de acesso.</p>
+    
+    <h2>1. Armazenamento Estritamente Local de Chaves e Dados</h2>
+    <p>Nenhum dado pessoal, senha mestre, número PIN, mnemônico de recuperação (semente BIP-39) ou chave privada é enviado, coletado, copiado ou compartilhado com servidores externos, servidores da Better2Better ou de quaisquer terceiros.</p>
+    <ul>
+      <li>As suas chaves e dados confidenciais permanecem criptografados de forma local e estrita no seu dispositivo usando cifras simétricas avançadas de nível militar (<span class="highlight">AES-256-GCM</span>).</li>
+      <li>Em dispositivos móveis (iOS e Android), a custódia das chaves simétricas que decifram a semente é delegada diretamente ao chip de segurança nativo do hardware físico (<span class="highlight">Secure Enclave</span> no iOS e <span class="highlight">Android Keystore</span> com StrongBox TEE no Android).</li>
+    </ul>
+
+    <h2>2. Ausência de Custódia e Controle do Usuário</h2>
+    <p>A B2 Wallet é um aplicativo do tipo <span class="highlight">não-custodial (Self-Custody)</span>. Isso significa que:</p>
+    <ul>
+      <li>Nós não temos acesso à sua senha mestre, PIN ou frase mnemônica de recuperação.</li>
+      <li>Se você perder sua frase mnemônica de 12 palavras, nós não teremos capacidade técnica ou humana de recuperar seus fundos. A custódia, responsabilidade e controle de backup residem exclusivamente em você.</li>
+    </ul>
+
+    <h2>3. Transparência e Código Aberto (Open Source)</h2>
+    <p>Em conformidade com as diretrizes de transparência mais exigentes do mercado financeiro e as regras de publicação de lojas de aplicativos, o código-fonte da B2 Wallet é 100% aberto e público. Isso permite que qualquer auditor de segurança ou desenvolvedor externo consiga verificar que o aplicativo não armazena ou transmite chaves de acesso a nenhum servidor.</p>
+
+    <h2>4. Conexões de Rede Real (Sem Rastreamento)</h2>
+    <p>A B2 Wallet conecta-se diretamente a provedores de nós públicos e RPCs das blockchains suportadas (como nós do Bitcoin, Ethereum, Solana e outros) para ler e exibir os saldos reais em tempo real. Essas consultas são feitas de forma puramente transacional. Não coletamos o histórico de suas consultas e não vinculamos o endereço da sua carteira à sua identidade civil de nenhuma maneira.</p>
+
+    <h2>5. Contato de Suporte Técnico</h2>
+    <p>Para dúvidas legais, auditorias de segurança de código ou suporte à compilação multiplataforma, você pode entrar em contato diretamente com o nosso time técnico liderado pelo Tech Lead <span class="highlight">Diego Oris</span> por meio do domínio oficial da nossa empresa desenvolvedora.</p>
+
+    <div class="footer">
+      Criado por <a href="https://better2better.com.br" style="color: var(--color-primary); text-decoration: none;" target="_blank">better2better.com.br</a>
+    </div>
+  </div>
+</body>
+</html>

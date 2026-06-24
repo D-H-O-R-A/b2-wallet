@@ -1,0 +1,249 @@
+LICENÇA DE CÓDIGO FONTE DISPONÍVEL B2 WALLET 1.0 (B2-SAL-1.0)
+
+Copyright (c) 2026 Better2Better e Diego Oris. Todos os direitos reservados.
+
+-------------------------------------------------------------------------------
+1. DEFINIÇÕES
+-------------------------------------------------------------------------------
+
+"Software" significa o software B2 Wallet, incluindo, sem limitação, seu 
+código-fonte, binários, versões compiladas, recursos (assets), designs, 
+documentação, APIs, interfaces, bibliotecas, scripts e todos os materiais 
+associados.
+
+"Licenciante" significa Better2Better e o Tech Lead Diego Oris.
+
+"Uso Comercial" significa qualquer uso do Software destinado a obter vantagem 
+comercial, benefício financeiro, compensação monetária ou geração de receita, 
+seja direta ou indiretamente, incluindo, sem limitação, vendas, negociações, 
+licenciamento ou transações comerciais.
+
+"Trabalho Derivado" significa qualquer modificação, adaptação, tradução, fork, 
+combinação, aprimoramento ou software substancialmente baseado no Software.
+
+"Usuário" significa qualquer pessoa física ou jurídica que exerça direitos sob 
+esta Licença.
+
+-------------------------------------------------------------------------------
+2. CONCESSÃO DE DIREITOS
+-------------------------------------------------------------------------------
+
+Sujeito aos termos e condições desta Licença, o Licenciante concede ao Usuário 
+uma licença limitada, não exclusiva, intransferível e revogável para:
+
+a) Acessar, visualizar e estudar o código-fonte oficial do Software.
+
+b) Realizar auditorias de segurança, revisões de código e avaliações de 
+   vulnerabilidade.
+
+c) Conduzir pesquisas acadêmicas, educacionais e pessoais de caráter 
+   estritamente não comercial.
+
+d) Compilar e executar o Software estritamente para fins de avaliação pessoal, 
+   testes e aprendizado.
+
+e) Enviar relatórios de bugs, correções e contribuições (pull requests) ao 
+   repositório oficial da B2 Wallet com o objetivo de ajudar a melhorar o projeto.
+
+f) Analisar o Software para fins de interoperabilidade local.
+
+Nenhum direito de propriedade intelectual ou autoral de qualquer tipo é 
+transferido sob esta Licença.
+
+-------------------------------------------------------------------------------
+3. USOS PERMITIDOS
+-------------------------------------------------------------------------------
+
+Os seguintes usos são expressamente permitidos sob esta Licença:
+
+- Estudo e pesquisa educacional ou acadêmica.
+- Avaliação pessoal e aprendizado.
+- Auditoria de segurança e revisão de código.
+- Pesquisa de vulnerabilidades e testes internos.
+- Contribuições diretas e suporte ao desenvolvimento do projeto oficial.
+
+-------------------------------------------------------------------------------
+4. USOS PROIBIDOS
+-------------------------------------------------------------------------------
+
+Sem a autorização prévia, expressa e por escrito do Licenciante, é estritamente 
+proibido ao Usuário:
+
+a) Vender, alugar, arrendar, sublicenciar, distribuir ou explorar comercialmente 
+   o Software ou qualquer parte dele.
+
+b) Oferecer o Software ou suas funcionalidades como um serviço hospedado (SaaS), 
+   serviço em nuvem ou utilitário de backend.
+
+c) Usar ou integrar o Software, seu código ou seus elementos visuais de design 
+   em produtos comerciais, sistemas corporativos ou plataformas monetizadas.
+
+d) Fornecer serviços de carteira (wallets), custódia, corretora, negociação ou 
+   pagamentos substancialmente baseados no Software.
+
+e) Operar serviços financeiros, corretagem, facilitação de negociações ou de 
+   transações utilizando o Software.
+
+f) Criar, distribuir ou promover softwares ou carteiras concorrentes baseados 
+   substancialmente no Software ou em seus Trabalhos Derivados.
+
+g) Distribuir publicamente, hospedar ou publicar versões modificadas, forks ou 
+   adaptações do Software.
+
+h) Remover, alterar ou ocultar quaisquer avisos de direitos autorais, marcas 
+   comerciais ou de licença do Software.
+
+i) Falsificar a autoria, reivindicar a propriedade intelectual ou induzir 
+   terceiros a acreditar que o Usuário ou qualquer outra entidade que não seja 
+   o Licenciante criou o Software ou qualquer parte dele.
+
+j) Usar o Software para qualquer atividade geradora de receita ou transações 
+   comerciais.
+
+-------------------------------------------------------------------------------
+5. MODIFICAÇÕES E REFORMULAÇÕES
+-------------------------------------------------------------------------------
+
+Os Usuários estão autorizados a modificar ou reformular o Software exclusivamente 
+para fins permitidos de estudo pessoal, pesquisa educacional e testes internos. 
+Se o Usuário modificar o Software, ele deverá cumprir as seguintes condições:
+
+a) Preservação dos Direitos Autorais: Todos os cabeçalhos de copyright originais 
+   e atribuições de autoria a Diego Oris e Better2Better devem permanecer 
+   integralmente intactos.
+
+b) Divulgação Obrigatória de Alterações: O Usuário deve obrigatoriamente incluir 
+   um aviso proeminente, claro e visível em cada arquivo modificado declarando 
+   que o arquivo foi alterado, especificando exatamente o que foi alterado, a 
+   data da alteração e o nome de quem modificou. É estritamente proibido alterar 
+   o código sem documentar detalhadamente o que foi reformulado.
+
+c) Proibição de Distribuição Pública: Versões modificadas ou forks do Software 
+   não podem ser distribuídos publicamente ou compartilhados sem a autorização 
+   expressa e por escrito do Licenciante.
+
+-------------------------------------------------------------------------------
+6. CONTRIBUIÇÕES
+-------------------------------------------------------------------------------
+
+Qualquer contribuição, correção de bugs ou melhorias voluntariamente enviadas 
+pelo Usuário ao projeto oficial da B2 Wallet concede ao Licenciante uma licença 
+perpétua, global, irrevogável, livre de royalties, totalmente paga e não exclusiva 
+para usar, modificar, distribuir, sublicenciar e incorporar tais contribuições 
+ao Software oficial.
+
+Os contribuidores retêm a propriedade intelectual original sobre suas contribuições.
+
+-------------------------------------------------------------------------------
+7. ATRIBUIÇÃO DE CRÉDITOS
+-------------------------------------------------------------------------------
+
+Todas as cópias, usos parciais ou execuções permitidas do Software devem preservar 
+e exibir de forma visível:
+
+- Todos os avisos originais de direitos autorais.
+- Este arquivo de Licença e seus respectivos avisos.
+- Atribuição explícita e proeminente à Better2Better.
+- Atribuição explícita e proeminente a Diego Oris como Tech Lead e criador.
+
+A remoção de atribuições, créditos ou avisos de direitos autorais é estritamente 
+proibida e constitui uma violação material desta Licença.
+
+-------------------------------------------------------------------------------
+8. MARCAS E IDENTIDADE VISUAL
+-------------------------------------------------------------------------------
+
+Esta Licença não concede nenhum direito de uso, cópia ou exibição de:
+
+- O nome "B2 Wallet" ou "Better2Better".
+- Quaisquer logotipos, ícones, designs ou elementos gráficos associados à B2 Wallet.
+- Marcas comerciais, elementos de marca ou marcas de serviço de propriedade do 
+  Licenciante.
+
+Qualquer uso comercial ou promocional dos elementos de marca requer autorização 
+prévia por escrito do Licenciante.
+
+-------------------------------------------------------------------------------
+9. PATENTES
+-------------------------------------------------------------------------------
+
+Nenhuma licença de patente, expressa ou implícita, é concedida sob esta Licença.
+
+-------------------------------------------------------------------------------
+10. ISENÇÃO DE RESPONSABILIDADE SOBRE SOFTWARE CRIPTOGRÁFICO
+-------------------------------------------------------------------------------
+
+O Software foi projetado para interagir com criptomoedas, ativos digitais, 
+contratos inteligentes descentralizados, redes blockchain e chaves privadas. 
+O Licenciante não faz declarações ou garantias quanto à segurança, confiabilidade, 
+disponibilidade contínua ou adequação do Software para fins financeiros, gestão 
+de ativos ou processamento de transações.
+
+Os Usuários assumem todos os riscos associados ao manuseio de chaves criptográficas, 
+gerenciamento de ativos digitais, interações com contratos inteligentes e 
+transações em redes blockchain.
+
+-------------------------------------------------------------------------------
+11. ISENÇÃO DE GARANTIA
+-------------------------------------------------------------------------------
+
+O SOFTWARE É FORNECIDO "COMO ESTÁ", SEM GARANTIA DE QUALQUER TIPO, EXPRESSA 
+OU IMPLÍCITA, INCLUINDO, MAS NÃO SE LIMITANDO A, GARANTIAS DE COMERCIALIZAÇÃO, 
+ADEQUAÇÃO A UM PROPÓSITO ESPECÍFICO E NÃO VIOLAÇÃO de direitos de terceiros. 
+TODO O RISCO QUANTO À QUALIDADE E DESEMPENHO DO SOFTWARE É ASSUMIDO PELO USUÁRIO.
+
+-------------------------------------------------------------------------------
+12. LIMITAÇÃO DE RESPONSABILIDADE
+-------------------------------------------------------------------------------
+
+EM NENHUM CASO O LICENCIANTE, SEUS FUNDADORES OU COLABORADORES SERÃO RESPONSÁVEIS 
+POR QUALQUER PERDA DE FUNDOS, PERDA DE ATIVOS DIGITAIS, PERDA DE CHAVES PRIVADAS, 
+EXPOSIÇÃO DE PALAVRAS-SEMENTE (SEED PHRASE), PERDA DE DADOS, INTERRUPÇÃO DE 
+NEGÓCIOS, PERDA DE LUCROS, INCIDENTES DE SEGURANÇA OU QUAISQUER DANOS DIRETOS, 
+INDIRETOS, ESPECIAIS, INCIDENTAIS OU CONSEQUENCIAIS DECORRENTES DO USO OU DA 
+INCAPACIDADE DE USAR O SOFTWARE.
+
+-------------------------------------------------------------------------------
+13. RESCISÃO E EXTINÇÃO
+-------------------------------------------------------------------------------
+
+Qualquer violação de qualquer termo ou condição desta Licença pelo Usuário extingue 
+imediatamente e de forma automática todos os direitos e licenças aqui concedidos.
+
+Após a extinção, o Usuário deve interromper imediatamente todo o uso, execução e 
+estudo do Software, devendo excluir todas as cópias do Software que estejam em 
+sua posse ou sob seu controle.
+
+-------------------------------------------------------------------------------
+14. LEI APLICÁVEL E FORO DE ELEIÇÃO
+-------------------------------------------------------------------------------
+
+Esta Licença será regida, interpretada e aplicada de acordo com as leis vigentes 
+na República Federativa do Brasil.
+
+Qualquer controvérsia, disputa ou reclamação decorrente ou relacionada a esta 
+Licença, incluindo sua existência, validade, interpretação ou violação, será 
+submetida exclusivamente à jurisdição do Foro da Comarca de São Paulo, SP, Brasil.
+
+-------------------------------------------------------------------------------
+15. ISENÇÃO DE STATUS DE CÓDIGO ABERTO (OPEN SOURCE)
+-------------------------------------------------------------------------------
+
+O Software é disponibilizado sob o modelo de código-fonte disponível (Source-Available). 
+Esta Licença não é aprovada pela Open Source Initiative (OSI). O Software não é 
+Software Livre ou de Código Aberto nos termos das definições da OSI.
+
+Ao utilizar o Software, você reconhece seu caráter proprietário e restritivo.
+
+-------------------------------------------------------------------------------
+16. CONTATO E SOLICITAÇÕES DE LICENCIAMENTO
+-------------------------------------------------------------------------------
+
+Para solicitações de licenciamento, parcerias comerciais ou autorizações escritas:
+
+Better2Better
+contact@better2better.com
+
+-------------------------------------------------------------------------------
+FIM DOS TERMOS
+-------------------------------------------------------------------------------

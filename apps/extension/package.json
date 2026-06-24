@@ -1,0 +1,16 @@
+{
+  "name": "b2-wallet-extension",
+  "version": "0.1.3",
+  "version_name": "0.1.3 beta",
+  "description": "Extensão de Navegador B2 Wallet (Chrome, Firefox, Opera, Edge)",
+  "private": true,
+  "scripts": {
+    "build": "echo 'Build da Extensão completado'",
+    "dev": "echo 'Modo de desenvolvimento da extensão ativo'"
+  },
+  "dependencies": {
+    "b2-wallet-sdk-web3": "*"
+  },
+  "author": "Diego Oris <better2better.com.br>",
+  "license": "SEE LICENSE IN LICENSE"
+}

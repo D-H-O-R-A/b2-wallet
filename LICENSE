@@ -1,0 +1,241 @@
+B2 WALLET SOURCE AVAILABLE LICENSE 1.0 (B2-SAL-1.0)
+
+Copyright (c) 2026 Better2Better and Diego Oris. All Rights Reserved.
+
+-------------------------------------------------------------------------------
+1. DEFINITIONS
+-------------------------------------------------------------------------------
+
+"Software" means the B2 Wallet software, including but not limited to its
+source code, binaries, compiled versions, assets, designs, documentation,
+APIs, interfaces, libraries, scripts, and all associated materials.
+
+"Licensor" means Better2Better and Tech Lead Diego Oris.
+
+"Commercial Use" means any use of the Software intended for commercial
+advantage, financial benefit, monetary compensation, or revenue generation,
+whether direct or indirect, including but not limited to sales, trading, 
+licensing, or business negotiations.
+
+"Derivative Work" means any modification, adaptation, translation, fork,
+combination, enhancement, or software substantially based upon the Software.
+
+"User" means any individual or legal entity exercising rights under this 
+License.
+
+-------------------------------------------------------------------------------
+2. GRANT OF RIGHTS
+-------------------------------------------------------------------------------
+
+Subject to the terms and conditions of this License, the Licensor grants the 
+User a limited, non-exclusive, non-transferable, revocable license to:
+
+a) Access, view, and study the official source code of the Software.
+
+b) Perform security audits, code reviews, and vulnerability assessments.
+
+c) Conduct academic, educational, and personal non-commercial research.
+
+d) Compile and execute the Software strictly for personal evaluation,
+   testing, and learning purposes.
+
+e) Submit bug reports, patches, and contributions (pull requests) to the 
+   official B2 Wallet repository in order to help improve the project.
+
+f) Analyze the Software for local interoperability purposes.
+
+No intellectual property or ownership rights of any kind are transferred under 
+this License.
+
+-------------------------------------------------------------------------------
+3. PERMITTED USES
+-------------------------------------------------------------------------------
+
+The following uses are expressly permitted under this License:
+
+- Educational and academic study.
+- Personal evaluation and learning.
+- Security auditing and code review.
+- Vulnerability research and testing.
+- Direct contributions and development support to the official project.
+
+-------------------------------------------------------------------------------
+4. PROHIBITED USES
+-------------------------------------------------------------------------------
+
+Without prior, express, and written authorization from the Licensor, the User 
+is strictly prohibited from doing any of the following:
+
+a) Selling, renting, leasing, sublicensing, distributing, or commercially 
+   exploiting the Software or any part of it.
+
+b) Offering the Software or its features as a hosted service (SaaS), cloud 
+   service, or backend utility.
+
+c) Using or integrating the Software, its code, or its design assets in 
+   commercial products, corporate systems, or monetized platforms.
+
+d) Providing wallet, custodial, exchange, trading, or payment services 
+   substantially based on the Software.
+
+e) Operating financial, brokerage, negotiation, or transaction facilitation 
+   services using the Software.
+
+f) Creating, distributing, or promoting competing software or wallets based 
+   substantially on the Software or its Derivative Works.
+
+g) Publicly distributing, hosting, or publishing modified versions, forks, 
+   or adaptations of the Software.
+
+h) Removing, altering, or obscuring any copyright, trademark, or license 
+   notices from the Software.
+
+i) Misrepresenting authorship, claiming ownership, or leading any third 
+   parties to believe that the User or any entity other than the Licensor 
+   created the Software or any portion of it.
+
+j) Using the Software for any revenue-generating activities.
+
+-------------------------------------------------------------------------------
+5. MODIFICATIONS & REFORMULATIONS
+-------------------------------------------------------------------------------
+
+Users are authorized to modify or reformulate the Software exclusively for the 
+permitted purposes of personal study, educational research, and internal 
+testing. If the User modifies the Software, the User must comply with the 
+following conditions:
+
+a) Preservation of Copyright: All original copyright headers and authorship 
+   attributions to Diego Oris and Better2Better must remain entirely intact.
+
+b) Mandatory Disclosure of Alterations: The User must include a prominent, 
+   clear, and visible notice in each modified file stating that the file 
+   has been modified, specifying exactly what was changed, the date of the 
+   change, and the name of the modifier. Modifying the code without documenting 
+   the exact changes made is strictly prohibited.
+
+c) No Public Distribution: Modified versions or forks of the Software may 
+   not be publicly distributed or shared without the express written permission 
+   of the Licensor.
+
+-------------------------------------------------------------------------------
+6. CONTRIBUTIONS
+-------------------------------------------------------------------------------
+
+Any contribution, bug fix, or improvement voluntarily submitted by the User 
+to the official B2 Wallet project grants the Licensor a perpetual, worldwide, 
+irrevocable, royalty-free, fully paid-up, non-exclusive license to use, 
+modify, distribute, sublicense, and incorporate such contributions into the 
+official Software. 
+
+Contributors retain copyright ownership of their original contributions.
+
+-------------------------------------------------------------------------------
+7. ATTRIBUTION
+-------------------------------------------------------------------------------
+
+All copies, partial uses, or permitted runs of the Software must preserve and 
+display visibly:
+
+- All original copyright notices.
+- This License file and its notices.
+- Explicit and prominent attribution to Better2Better.
+- Explicit and prominent attribution to Diego Oris as the creator/Tech Lead.
+
+Removal of attribution, credits, or copyright notices is strictly prohibited 
+and constitutes a material breach of this License.
+
+-------------------------------------------------------------------------------
+8. TRADEMARKS & BRANDING
+-------------------------------------------------------------------------------
+
+This License does not grant any rights to use, copy, or display:
+
+- The name "B2 Wallet" or "Better2Better".
+- Any logos, icons, designs, or graphics associated with B2 Wallet.
+- Trademarks, brand assets, or service marks owned by the Licensor.
+
+Any commercial or promotional use of the brand assets requires prior written 
+authorization from the Licensor.
+
+-------------------------------------------------------------------------------
+9. PATENTS
+-------------------------------------------------------------------------------
+
+No patent license, express or implied, is granted under this License.
+
+-------------------------------------------------------------------------------
+10. CRYPTOGRAPHIC SOFTWARE DISCLAIMER
+-------------------------------------------------------------------------------
+
+The Software is designed to interact with cryptocurrencies, digital assets, 
+decentralized smart contracts, blockchain networks, and private keys. The 
+Licensor makes no representations or warranties regarding the security, 
+reliability, continuous availability, or fitness of the Software for financial 
+purposes, asset management, or transaction processing. 
+
+Users assume all risks associated with cryptographic keys, digital assets, 
+smart contract interactions, and network transactions.
+
+-------------------------------------------------------------------------------
+11. DISCLAIMER OF WARRANTY
+-------------------------------------------------------------------------------
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, 
+FITNESS FOR A PARTICULAR PURPOSE, AND NON-INFRINGEMENT. THE ENTIRE RISK AS TO 
+THE QUALITY AND PERFORMANCE OF THE SOFTWARE IS WITH THE USER.
+
+-------------------------------------------------------------------------------
+12. LIMITATION OF LIABILITY
+-------------------------------------------------------------------------------
+
+IN NO EVENT SHALL THE LICENSOR, ITS FOUNDERS, OR CONTRIBUTORS BE LIABLE FOR 
+ANY LOSS OF FUNDS, LOSS OF DIGITAL ASSETS, LOSS OF PRIVATE KEYS, SEED PHRASE 
+EXPOSURE, DATA LOSS, BUSINESS INTERRUPTION, LOST PROFITS, SECURITY INCIDENTS, 
+OR ANY DIRECT, INDIRECT, SPECIAL, INCIDENTAL, OR CONSEQUENTIAL DAMAGES ARISING 
+OUT OF THE USE OR INABILITY TO USE THE SOFTWARE.
+
+-------------------------------------------------------------------------------
+13. TERMINATION
+-------------------------------------------------------------------------------
+
+Any violation of any term or condition of this License by the User immediately 
+and automatically terminates all rights and licenses granted herein. 
+
+Upon termination, the User must immediately cease all use, execution, and 
+study of the Software and delete all copies of the Software in their possession.
+
+-------------------------------------------------------------------------------
+14. GOVERNING LAW & JURISDICTION
+-------------------------------------------------------------------------------
+
+This License shall be governed by, interpreted, and construed in accordance 
+with the laws of the Federative Republic of Brazil. 
+
+Any dispute, controversy, or claim arising out of or relating to this License, 
+including its existence, validity, interpretation, or breach, shall be 
+submitted exclusively to the courts of São Paulo, SP, Brazil.
+
+-------------------------------------------------------------------------------
+15. OPEN SOURCE STATUS DISCLAIMER
+-------------------------------------------------------------------------------
+
+The Software is provided under a Source-Available model. This License is not 
+approved by the Open Source Initiative (OSI). The Software is not Free 
+Software or Open Source Software under OSI definitions. 
+
+By using the Software, you acknowledge its proprietary and restricted status.
+
+-------------------------------------------------------------------------------
+16. CONTACT & LICENSING INQUIRIES
+-------------------------------------------------------------------------------
+
+For licensing inquiries, commercial partnerships, or written authorizations:
+
+Better2Better
+contact@better2better.com
+
+-------------------------------------------------------------------------------
+END OF TERMS
+-------------------------------------------------------------------------------

@@ -1,0 +1,2740 @@
+<!DOCTYPE html>
+<html lang="pt" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B2 Wallet — Auto-Custódia Multichain</title>
+  <meta name="description"
+    content="B2 Wallet: carteira multichain de auto-custódia com suporte a 28 blockchains, leasing nativo, QR Code e taxa de gas automática.">
+  <link rel="icon" type="image/x-icon" href="src/img/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="src/img/logo_192.png">
+
+  <!-- Early Extension Layout Detector (CSP-Compliant) -->
+  <script src="src/js/detector.js"></script>
+  <script src="capacitor.js"></script>
+
+  <!-- Design System & Componentes -->
+  <link rel="stylesheet" href="src/css/design-system.css">
+  <link rel="stylesheet" href="src/css/components.css">
+
+  <!-- Local Vendor Scripts (CSP-Compliant) -->
+  <script src="src/js/vendor/gsap.min.js"></script>
+  <script src="src/js/vendor/lucide.min.js"></script>
+  <!-- QRCode.js — Geração de QR Code real no browser -->
+  <script src="src/js/vendor/qrcode.min.js"></script>
+
+  <style>
+    /* ================================================================
+       FULLTAB LAYOUT CHANGES (Remove browser, keep log and wallet shell)
+       ================================================================ */
+    .is-fulltab .playground-panel .browser-top-bar,
+    .is-fulltab .playground-panel .browser-tabs,
+    .is-fulltab .playground-panel .browser-viewport {
+      display: none !important;
+    }
+
+    .is-fulltab .playground-panel .terminal-container {
+      flex: 1 !important;
+      max-height: none !important;
+      border-top: none !important;
+      height: 100% !important;
+    }
+
+    .is-fulltab .playground-panel {
+      padding: var(--space-4) !important;
+      gap: 0 !important;
+    }
+
+    /* Highlight class for better2better.com.br */
+    .b2b-highlight-link {
+      color: #39ff14 !important;
+      /* neon green console style */
+      font-weight: var(--fw-bold) !important;
+      text-shadow: 0 0 8px rgba(57, 255, 20, 0.6);
+      border-bottom: 1.5px dashed #39ff14;
+      padding-bottom: 1px;
+      text-decoration: none;
+      transition: all var(--transition-fast) !important;
+      cursor: pointer !important;
+    }
+
+    .b2b-highlight-link:hover {
+      color: #ff007f !important;
+      /* neon pink */
+      text-shadow: 0 0 12px rgba(255, 0, 127, 0.8);
+      border-bottom-color: #ff007f;
+    }
+
+    /* ================================================================
+       ESTILOS DO PAINEL DIREITO (Playground / Browser Simulator)
+       ================================================================ */
+    .browser-simulator-shell {
+      background: var(--bg-panel);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+    }
+
+    .browser-top-bar {
+      display: flex;
+      align-items: center;
+      gap: var(--space-3);
+      padding: var(--space-3) var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .mac-dots {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      cursor: default;
+      transition: filter var(--transition-fast);
+    }
+
+    .dot:hover {
+      filter: brightness(1.3);
+    }
+
+    .dot.red {
+      background: #ff5f56;
+    }
+
+    .dot.yellow {
+      background: #ffbd2e;
+    }
+
+    .dot.green {
+      background: #27c93f;
+    }
+
+    .browser-nav-arrows {
+      display: flex;
+      gap: var(--space-1);
+    }
+
+    .nav-arrow-btn {
+      background: var(--bg-hover);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-xs);
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-muted);
+      font-size: 0.7rem;
+      transition: all var(--transition-fast);
+    }
+
+    .nav-arrow-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .nav-arrow-btn:not(:disabled):hover {
+      background: var(--bg-active);
+      color: var(--text-primary);
+    }
+
+    .browser-address-bar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: var(--space-1) var(--space-3);
+      background: var(--bg-input);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-ui);
+      font-size: var(--text-xs);
+      color: var(--text-muted);
+      overflow: hidden;
+    }
+
+    .lock-icon {
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+
+    .address-url {
+      flex: 1;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .refresh-badge {
+      background: rgba(16, 185, 129, 0.1);
+      color: var(--text-success);
+      font-size: var(--text-2xs);
+      padding: 2px var(--space-2);
+      border-radius: var(--radius-full);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      white-space: nowrap;
+      font-weight: var(--fw-semibold);
+    }
+
+    .browser-network-badge {
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      font-family: var(--font-ui);
+      font-size: var(--text-2xs);
+      font-weight: var(--fw-semibold);
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .network-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--text-danger);
+    }
+
+    .network-dot.active {
+      background: var(--text-success);
+      box-shadow: 0 0 6px var(--text-success);
+    }
+
+    .browser-tabs {
+      display: flex;
+      gap: 2px;
+      padding: 0 var(--space-4);
+      border-bottom: 1px solid var(--border-subtle);
+      flex-shrink: 0;
+    }
+
+    .browser-tab {
+      padding: var(--space-2) var(--space-3);
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      font-family: var(--font-ui);
+      font-size: var(--text-xs);
+      font-weight: var(--fw-medium);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      align-items: center;
+      gap: var(--space-1);
+      white-space: nowrap;
+    }
+
+    .browser-tab:hover {
+      color: var(--text-secondary);
+    }
+
+    .browser-tab.active {
+      color: var(--color-secondary);
+      border-bottom-color: var(--color-secondary);
+    }
+
+    .browser-viewport {
+      flex: 1;
+      overflow-y: auto;
+      padding: var(--space-4);
+    }
+
+    .browser-tab-content {
+      display: none;
+    }
+
+    .browser-tab-content.active {
+      display: block;
+    }
+
+    .terminal-container {
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      border-top: 1px solid var(--border-subtle);
+      max-height: 220px;
+    }
+
+    .terminal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: var(--space-2) var(--space-4);
+      background: var(--bg-input);
+      flex-shrink: 0;
+    }
+
+    .terminal-title {
+      font-family: var(--font-mono);
+      font-size: var(--text-2xs);
+      color: var(--text-muted);
+      font-weight: var(--fw-semibold);
+    }
+
+    .terminal-clear-btn {
+      background: transparent;
+      border: 1px solid var(--border-light);
+      font-family: var(--font-mono);
+      font-size: var(--text-2xs);
+      font-weight: var(--fw-semibold);
+      color: var(--text-muted);
+      padding: 3px var(--space-2);
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .terminal-clear-btn:hover {
+      color: var(--color-primary);
+      border-color: var(--color-primary);
+    }
+
+    .console-log {
+      flex: 1;
+      background: #010204;
+      padding: var(--space-3) var(--space-4);
+      font-family: 'Courier New', monospace;
+      font-size: 0.8rem;
+      color: #39ff14;
+      overflow-y: auto;
+      line-height: 1.6;
+    }
+
+    .console-entry {
+      position: relative;
+      margin-bottom: var(--space-1);
+      border-left: 2px solid var(--color-secondary);
+      padding-left: var(--space-2);
+      padding-right: 70px;
+    }
+
+    .console-entry-copy-btn {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: inherit;
+      font-family: var(--font-mono);
+      font-size: 9px;
+      font-weight: var(--fw-semibold);
+      padding: 1px 6px;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity var(--transition-fast), background var(--transition-fast);
+      pointer-events: none;
+    }
+
+    .console-entry:hover .console-entry-copy-btn {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .console-entry-copy-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .console-entry.error {
+      color: #ff5555;
+      border-left-color: var(--text-danger);
+    }
+
+    .console-entry.warning {
+      color: #f59e0b;
+      border-left-color: var(--color-primary);
+    }
+
+    /* Playground status */
+    .playground-status {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-2);
+      padding: 4px var(--space-3);
+      background: var(--bg-hover);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-full);
+      font-family: var(--font-ui);
+      font-size: var(--text-xs);
+      font-weight: var(--fw-semibold);
+    }
+
+    .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-danger);
+    }
+
+    .status-dot.connected {
+      background: var(--text-success);
+      box-shadow: 0 0 6px var(--text-success);
+    }
+
+    /* Uniswap card */
+    .uniswap-title {
+      font-family: var(--font-ui);
+      font-size: var(--text-sm);
+      font-weight: var(--fw-bold);
+      color: #ff007f;
+    }
+
+    .uniswap-input-card {
+      background: var(--bg-input);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: var(--space-3);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+
+    .uniswap-btn {
+      background: linear-gradient(135deg, #ff007f, #7928ca);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-family: var(--font-ui);
+      font-weight: var(--fw-bold);
+      font-size: var(--text-sm);
+      transition: all var(--transition-fast);
+    }
+
+    .uniswap-btn:hover:not(:disabled) {
+      box-shadow: 0 0 20px rgba(255, 0, 127, 0.35);
+    }
+
+    .uniswap-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    /* Lease dApp */
+    .lease-dapp-container {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
+    }
+
+    .lease-node-grid {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
+    }
+
+    .lease-node-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: var(--space-3) var(--space-4);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .lease-node-card:hover {
+      border-color: var(--border-medium);
+    }
+
+    .lease-node-card.selected {
+      border-color: var(--color-primary);
+      background: rgba(245, 158, 11, 0.04);
+    }
+
+    /* NFT studio */
+    .nft-sim-grid {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: var(--space-4);
+    }
+
+    .nft-canvas-preview {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-2);
+      padding: var(--space-3);
+      position: relative;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Toasts de Notificação -->
+  <div id="b2-toast-container" class="b2-toast-container"></div>
+
+  <!-- Anti-Screenshot Overlay -->
+  <div class="anti-screenshot-overlay">
+    <div class="anti-screenshot-logo">B2 WALLET</div>
+    <div class="anti-screenshot-desc" data-i18n="antiScreenshot">Proteção Ativa contra Capturas e Espionagem</div>
+  </div>
+
+  <!-- ================================================================
+       MODAIS GLOBAIS (fora do wallet-shell — FIX CRÍTICO do bug)
+       ================================================================ -->
+
+  <!-- MODAL: Receber com QR Code Real -->
+  <div id="modal-receive" class="b2-modal modal-centered">
+    <div class="b2-modal-content">
+      <div class="b2-modal-header">
+        <h3 id="receive-modal-title" class="b2-modal-title">Receber</h3>
+        <button id="btn-close-receive" class="b2-modal-close">&times;</button>
+      </div>
+      <div class="qr-code-wrapper">
+        <!-- Chain chip -->
+        <div id="receive-chain-chip"
+          style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;background:var(--bg-hover);border:1px solid var(--border-light);border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:var(--fw-semibold);color:var(--text-secondary);">
+          <span id="receive-chain-dot"
+            style="width:6px;height:6px;border-radius:50%;background:var(--color-primary);"></span>
+          <span id="receive-chain-label">Rede</span>
+        </div>
+        <!-- Selector de endereço Zcash (exibido apenas para ZEC) -->
+        <div id="receive-zcash-selector-container"
+          style="display: none; width: 100%; margin-top: var(--space-2); margin-bottom: var(--space-2);">
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="receive-zcash-tab-transparent" type="button" class="zcash-receive-tab active"
+              data-type="tAddress"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">Transparent</button>
+            <button id="receive-zcash-tab-sapling" type="button" class="zcash-receive-tab" data-type="saplingAddress"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Sapling
+              (z)</button>
+            <button id="receive-zcash-tab-unified" type="button" class="zcash-receive-tab" data-type="unifiedAddress"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Unified
+              (u)</button>
+          </div>
+        </div>
+        <!-- Selector de endereço Dash (exibido apenas para DASH) -->
+        <div id="receive-dash-selector-container"
+          style="display: none; width: 100%; margin-top: var(--space-2); margin-bottom: var(--space-2);">
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="receive-dash-tab-p2pkh" type="button" class="dash-receive-tab active" data-type="p2pkh"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">P2PKH
+              (X-Address)</button>
+            <button id="receive-dash-tab-p2sh" type="button" class="dash-receive-tab" data-type="p2sh"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">P2SH
+              (7-Address)</button>
+          </div>
+        </div>
+        <!-- Seletor de endereço Bitcoin (exibido apenas para BTC) -->
+        <div id="receive-btc-selector-container"
+          style="display: none; width: 100%; margin-top: var(--space-2); margin-bottom: var(--space-2);">
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="receive-btc-tab-native" type="button" class="btc-receive-tab active" data-type="native"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">SegWit</button>
+            <button id="receive-btc-tab-nested" type="button" class="btc-receive-tab" data-type="nested"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Nested</button>
+            <button id="receive-btc-tab-legacy" type="button" class="btc-receive-tab" data-type="legacy"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Legacy</button>
+            <button id="receive-btc-tab-taproot" type="button" class="btc-receive-tab" data-type="taproot"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Taproot</button>
+          </div>
+        </div>
+        <!-- Seletor de endereço Litecoin (exibido apenas para LTC) -->
+        <div id="receive-ltc-selector-container"
+          style="display: none; width: 100%; margin-top: var(--space-2); margin-bottom: var(--space-2);">
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="receive-ltc-tab-legacy" type="button" class="ltc-receive-tab active" data-type="legacy"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">Legacy</button>
+            <button id="receive-ltc-tab-nested" type="button" class="ltc-receive-tab" data-type="nested"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Nested</button>
+            <button id="receive-ltc-tab-native" type="button" class="ltc-receive-tab" data-type="native"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">SegWit</button>
+          </div>
+        </div>
+        <!-- Seletor de endereço Dogecoin (exibido apenas para DOGE) -->
+        <div id="receive-doge-selector-container"
+          style="display: none; width: 100%; margin-top: var(--space-2); margin-bottom: var(--space-2);">
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="receive-doge-tab-legacy" type="button" class="doge-receive-tab active" data-type="legacy"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">Legacy</button>
+            <button id="receive-doge-tab-nested" type="button" class="doge-receive-tab" data-type="nested"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Nested</button>
+          </div>
+        </div>
+        <!-- Seletor de endereço Bitcoin Cash (exibido apenas para BCH) -->
+        <div id="receive-bch-selector-container"
+          style="display: none; width: 100%; margin-top: var(--space-2); margin-bottom: var(--space-2);">
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="receive-bch-tab-cashaddr" type="button" class="bch-receive-tab active" data-type="cashaddr"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">CashAddr</button>
+            <button id="receive-bch-tab-legacy" type="button" class="bch-receive-tab" data-type="legacy"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Legacy</button>
+          </div>
+        </div>
+        <!-- QR Code container (gerado pelo qrcode.js) -->
+        <div class="qr-code-container">
+          <div id="qrcode-container" style="width:200px;height:200px;"></div>
+        </div>
+        <!-- Endereço copiável -->
+        <div style="width:100%;">
+          <div class="form-label" style="margin-bottom:var(--space-2);">Endereço de Destino</div>
+          <div id="receive-address-display" class="qr-address-display selectable">—</div>
+        </div>
+        <div style="display:flex;gap:var(--space-2);width:100%;">
+          <button id="receive-copy-btn" class="btn btn-primary" style="flex:1;" data-i18n="copyAddress">Copiar
+            Endereço</button>
+          <button id="receive-share-btn" class="btn btn-outline" style="flex:1;">Compartilhar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Enviar / Transferir -->
+  <div id="modal-send" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:440px;">
+      <div class="b2-modal-header">
+        <h3 id="send-modal-title" class="b2-modal-title">Enviar</h3>
+        <button id="btn-close-send" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <!-- Seletor de Token -->
+        <div class="form-group" style="margin-bottom:0;position:relative;">
+          <label class="form-label">Token</label>
+          <div class="custom-select-container" style="position:relative;width:100%;">
+            <div id="send-token-selector-trigger" class="custom-select-trigger">
+              <div class="custom-select-trigger-label">
+                <span id="send-token-icon" style="font-size:1rem;">🔷</span>
+                <span id="send-token-name">Nativo</span>
+              </div>
+              <span class="custom-select-trigger-arrow">▼</span>
+            </div>
+            <div id="send-token-dropdown-options" class="custom-select-options"></div>
+          </div>
+        </div>
+        <!-- Selector de Transação Zcash (exibido apenas para ZEC) -->
+        <div id="send-zcash-selector-container" class="form-group" style="display: none; margin-bottom: 0;">
+          <label class="form-label">Tipo de Transação / Rota de Envio</label>
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="send-zcash-tab-transparent" type="button" class="zcash-send-tab active" data-type="transparent"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">Pública
+              (Transparent)</button>
+            <button id="send-zcash-tab-shielded" type="button" class="zcash-send-tab" data-type="shielded"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Privada
+              (Sapling)</button>
+            <button id="send-zcash-tab-unified" type="button" class="zcash-send-tab" data-type="unified"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">Roteamento
+              Unificado</button>
+          </div>
+        </div>
+        <!-- Selector de Transação Dash (exibido apenas para DASH) -->
+        <div id="send-dash-selector-container" class="form-group" style="display: none; margin-bottom: 0;">
+          <label class="form-label">Formato de Envio / Rota de Troco</label>
+          <div
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light);">
+            <button id="send-dash-tab-p2pkh" type="button" class="dash-send-tab active" data-type="p2pkh"
+              style="flex: 1; border: none; background: var(--color-primary); padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: #fff; cursor: pointer; transition: all 0.2s ease;">P2PKH
+              (X-Address)</button>
+            <button id="send-dash-tab-p2sh" type="button" class="dash-send-tab" data-type="p2sh"
+              style="flex: 1; border: none; background: transparent; padding: 6px var(--space-2); border-radius: var(--radius-md); font-family: var(--font-ui); font-size: var(--text-xs); font-weight: var(--fw-semibold); color: var(--text-secondary); cursor: pointer; transition: all 0.2s ease;">P2SH
+              (7-Address)</button>
+          </div>
+        </div>
+        <!-- Selector de Transação UTXO (exibido para BTC, LTC, DOGE, BCH) -->
+        <div id="send-utxo-selector-container" class="form-group" style="display: none; margin-bottom: 0;">
+          <label class="form-label">Endereço de Origem / Formato</label>
+          <div id="send-utxo-tabs-container"
+            style="display: flex; gap: var(--space-1); background: var(--bg-hover); padding: 4px; border-radius: var(--radius-lg); border: 1px solid var(--border-light); flex-wrap: wrap;">
+            <!-- Buttons dynamically inserted/updated by JS -->
+          </div>
+        </div>
+        <!-- Destinatário -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Endereço de Destino</label>
+          <div class="form-input-container">
+            <input type="text" id="send-to-address" class="form-input" placeholder="Endereço do destinatário...">
+          </div>
+          <span id="send-address-validation"
+            style="font-size:var(--text-xs);color:var(--text-muted);display:none;"></span>
+        </div>
+        <!-- Memo / Tag de Destino (Opcional, exibido para blockchains específicas como BNB, DASH) -->
+        <div id="send-memo-container" class="form-group" style="margin-bottom:0; display:none;">
+          <label id="send-memo-label" class="form-label">Memo / Destination Tag</label>
+          <div class="form-input-container">
+            <input type="text" id="send-memo-input" class="form-input"
+              placeholder="Opcional se enviando para carteira pessoal...">
+          </div>
+        </div>
+        <!-- Valor -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Valor a Enviar</label>
+          <div style="display:flex;gap:var(--space-2);">
+            <div class="form-input-container" style="flex:1;">
+              <input type="number" id="send-amount" class="form-input" placeholder="0.00" min="0" step="any">
+            </div>
+            <button id="send-max-btn" class="btn btn-outline btn-sm"
+              style="flex-shrink:0;font-size:var(--text-xs);font-weight:var(--fw-bold);">MAX</button>
+          </div>
+          <span id="send-amount-fiat" style="font-size:var(--text-xs);color:var(--text-muted);">≈ $ 0.00</span>
+          <span id="send-amount-validation"
+            style="font-size:var(--text-xs);color:var(--text-danger);display:none;margin-top:2px;"></span>
+        </div>
+        <!-- Seletor de Ativo para Taxa (Exibido apenas para blockchains baseadas em Waves como Waves, AMZX, PlanetOne) -->
+        <div id="send-fee-asset-container" class="form-group" style="display:none; margin-bottom:0; position:relative;">
+          <label class="form-label">Pagar taxa com</label>
+          <div class="custom-select-container" style="position:relative;width:100%;">
+            <div id="send-fee-asset-trigger" class="custom-select-trigger">
+              <div class="custom-select-trigger-label">
+                <span id="send-fee-asset-icon" style="font-size:1rem;">🔷</span>
+                <span id="send-fee-asset-name">Nativo</span>
+              </div>
+              <span class="custom-select-trigger-arrow">▼</span>
+            </div>
+            <div id="send-fee-asset-dropdown-options" class="custom-select-options"></div>
+          </div>
+        </div>
+        <!-- Estimativa de Taxa de Gas -->
+        <div class="gas-fee-card">
+          <div class="gas-fee-row">
+            <span class="gas-fee-label">Taxa de Rede Estimada</span>
+            <span id="gas-fee-loading" style="font-size:var(--text-xs);color:var(--text-muted);">Calculando...</span>
+          </div>
+          <div class="gas-fee-row">
+            <span class="gas-fee-label">Gas Limit</span>
+            <span id="gas-limit-display" class="gas-fee-value">—</span>
+          </div>
+          <div class="gas-fee-row">
+            <span class="gas-fee-label">Gas Price</span>
+            <span id="gas-price-display" class="gas-fee-value">—</span>
+          </div>
+          <div style="border-top:1px solid var(--border-subtle);padding-top:var(--space-2);margin-top:var(--space-1);">
+            <div class="gas-fee-row">
+              <span class="gas-fee-label" style="font-weight:var(--fw-bold);color:var(--text-primary);">Total
+                Estimado</span>
+              <span id="gas-total-display" class="gas-fee-value gas-fee-total">—</span>
+            </div>
+          </div>
+        </div>
+        <!-- PIN de confirmação -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">PIN de Confirmação (8 dígitos)</label>
+          <div class="form-input-container">
+            <input type="password" id="send-pin-input" class="form-input" maxlength="8" pattern="[0-9]*"
+              inputmode="numeric" placeholder="••••••••">
+            <svg class="password-toggle-btn" data-target="send-pin-input" xmlns="http://www.w3.org/2000/svg" width="16"
+              height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle class="eye-open" cx="12" cy="12" r="3" />
+              <path class="eye-closed" style="display:none;"
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+              <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          </div>
+        </div>
+        <button id="btn-send-confirm" class="btn btn-primary btn-lg" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="22" y1="2" x2="11" y2="13" />
+            <polyline points="22 2 15 22 11 13 2 9 22 2" />
+          </svg>
+          Confirmar Envio
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Gerenciador de Contas (Multi-Account) -->
+  <div id="modal-account-manager" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:400px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="manageAccountsTitle">Gerenciar Contas</h3>
+        <button id="btn-close-account-manager" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <div id="account-list-container"
+          style="display:flex;flex-direction:column;gap:var(--space-2);max-height:280px;overflow-y:auto;">
+          <!-- Preenchido dinamicamente -->
+        </div>
+        <div style="display:flex;gap:var(--space-2);">
+          <button id="btn-new-account" class="btn btn-outline" style="flex:1;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span data-i18n="newAccountBtn">Nova Conta</span>
+          </button>
+          <button id="btn-import-account" class="btn btn-outline" style="flex:1;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span data-i18n="importAccountBtn">Importar</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Importar Conta -->
+  <div id="modal-import-account" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:420px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="importAccountBtn">Importar Conta</h3>
+        <button id="btn-close-import-account" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+
+        <!-- Nome da conta -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" data-i18n="accountNameLabel">Nome da Conta (opcional)</label>
+          <input type="text" id="import-account-label" class="form-input" data-i18n-placeholder="accountNamePlaceholder"
+            placeholder="Ex: Minha Carteira Principal">
+        </div>
+
+        <!-- Seletor de modo — dois cards -->
+        <div>
+          <div
+            style="font-size:var(--text-xs);font-weight:var(--fw-semibold);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-2);"
+            data-i18n="importMethodLabel">Método de Importação</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);">
+
+            <!-- Opção 1: Seed B2 Wallet -->
+            <div id="import-mode-b2" class="import-mode-card import-mode-card--active" data-mode="b2seed" style="
+              border:2px solid var(--color-primary);
+              border-radius:var(--radius-md);
+              padding:var(--space-3) var(--space-2);
+              background:var(--color-primary-dim);
+              cursor:pointer;
+              display:flex;flex-direction:column;align-items:center;gap:6px;
+              text-align:center;
+              transition:all var(--transition-fast);
+            ">
+              <div style="font-size:1.4rem;">🔑</div>
+              <div style="font-size:var(--text-xs);font-weight:var(--fw-bold);color:var(--text-primary);">Seed B2 Wallet
+              </div>
+              <div style="font-size:var(--text-2xs);color:var(--text-muted);line-height:1.3;"
+                data-i18n="importB2SeedDesc">BIP-39 / BIP-44 · Já uso a B2 Wallet em outro dispositivo</div>
+            </div>
+
+            <!-- Opção 2: Chave / Seed Externa -->
+            <div id="import-mode-external" class="import-mode-card" data-mode="external" style="
+              border:2px solid var(--border-light);
+              border-radius:var(--radius-md);
+              padding:var(--space-3) var(--space-2);
+              background:var(--bg-card);
+              cursor:pointer;
+              display:flex;flex-direction:column;align-items:center;gap:6px;
+              text-align:center;
+              transition:all var(--transition-fast);
+            ">
+              <div style="font-size:1.4rem;">🌐</div>
+              <div style="font-size:var(--text-xs);font-weight:var(--fw-bold);color:var(--text-primary);"
+                data-i18n="importExternalKeyTitle">Chave / Seed Externa</div>
+              <div style="font-size:var(--text-2xs);color:var(--text-muted);line-height:1.3;"
+                data-i18n="importExternalKeyDesc">Venho de outra carteira (formato compatível)</div>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Painel: Seed B2 (ativo por padrão) -->
+        <div id="import-panel-b2seed" style="display:flex;flex-direction:column;gap:var(--space-3);">
+          <div class="info-banner" style="background:rgba(99,102,241,0.06);border-color:rgba(99,102,241,0.2);">
+            <div class="info-banner-icon">ℹ️</div>
+            <div class="info-banner-text">
+              <strong data-i18n="bip39bip44Title">BIP-39 + BIP-44 (HD Wallet)</strong>
+              <span data-i18n="bip39bip44Desc">Cole as 12 ou 24 palavras da sua B2 Wallet. A frase segue o padrão BIP-39
+                e os endereços são derivados via BIP-44 por blockchain.</span>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" data-i18n="importB2SeedLabel">Seed Phrase — 12 ou 24 palavras (BIP-39)</label>
+            <textarea id="import-b2-seed" class="form-input" rows="3" data-i18n-placeholder="importB2SeedPlaceholder"
+              placeholder="palavra1 palavra2 palavra3 ... palavra12"
+              style="resize:vertical;font-family:var(--font-mono);font-size:var(--text-xs);line-height:1.6;"></textarea>
+            <span style="font-size:var(--text-2xs);color:var(--text-muted);margin-top:3px;display:block;"
+              data-i18n="importB2SeedHint">A B2 Wallet usa BIP-39 para a frase e BIP-44 para derivar um endereço
+              diferente por blockchain automaticamente.</span>
+          </div>
+        </div>
+
+        <!-- Painel: Chave / Seed Externa (oculto por padrão) -->
+        <div id="import-panel-external" style="display:none;flex-direction:column;gap:var(--space-3);">
+          <div class="info-banner" style="background:rgba(245,158,11,0.06);border-color:rgba(245,158,11,0.2);">
+            <div class="info-banner-icon">⚠️</div>
+            <div class="info-banner-text">
+              <strong data-i18n="importExternalBannerTitle">Chave Privada ou Seed de Outra Carteira</strong>
+              <span data-i18n="importExternalBannerDesc">Insira a chave privada ou seed phrase no formato nativo da
+                blockchain de origem (ex: Ethereum, Solana, Bitcoin).</span>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" data-i18n="originChainLabel">Blockchain de Origem</label>
+            <select id="import-external-chain" class="form-input">
+              <option value="EVM">Ethereum / EVM (Redes compatíveis)</option>
+              <option value="Solana">Solana (Redes compatíveis)</option>
+              <option value="Bitcoin">Bitcoin (Redes compatíveis)</option>
+              <option value="Waves">Waves (Redes compatíveis)</option>
+              <option value="Tron">Tron (Redes compatíveis)</option>
+              <option value="Other">Outra / Genérica (semente BIP-39)</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label" id="import-external-key-label" data-i18n="externalKeyOrSeedLabel">Chave Privada ou
+              Seed Phrase</label>
+            <textarea id="import-external-key" class="form-input" rows="3"
+              data-i18n-placeholder="externalKeyOrSeedPlaceholder"
+              placeholder="Cole aqui a chave privada (0x...) ou seed phrase..."
+              style="resize:vertical;font-family:var(--font-mono);font-size:var(--text-xs);line-height:1.6;"></textarea>
+            <span id="import-external-key-hint"
+              style="font-size:var(--text-2xs);color:var(--text-muted);margin-top:3px;display:block;"
+              data-i18n="externalKeyOrSeedHint">
+              Aceita: chave privada hex (0x...), WIF (BTC), seed phrase em qualquer idioma BIP-39.
+            </span>
+          </div>
+        </div>
+
+        <!-- Botão de confirmação -->
+        <button id="btn-confirm-import-account" class="btn btn-primary" style="margin-top:var(--space-1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+            <polyline points="7 10 12 15 17 10" />
+            <line x1="12" y1="15" x2="12" y2="3" />
+          </svg>
+          <span data-i18n="importAccountBtn">Importar Conta</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Editar Conta (nome + avatar emoji) -->
+  <div id="modal-edit-account" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:380px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="editAccountTitle">Editar Conta</h3>
+        <button id="btn-close-edit-account" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <div style="display:flex;flex-direction:column;align-items:center;gap:var(--space-3);">
+          <div id="edit-account-avatar-preview" style="
+            width:72px;height:72px;border-radius:50%;
+            background:linear-gradient(135deg,var(--color-primary),var(--color-secondary));
+            display:flex;align-items:center;justify-content:center;
+            font-size:2.2rem;cursor:pointer;
+            border:3px solid var(--color-primary);
+            box-shadow:0 0 20px rgba(245,158,11,0.35);
+            transition:all var(--transition-normal);user-select:none;
+          " title="Clique para escolher um emoji">👤</div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted);text-align:center;"
+            data-i18n="editAccountAvatarHint">Clique no avatar para escolher um emoji</div>
+          <div id="edit-account-emoji-grid" style="
+            display:none;flex-wrap:wrap;gap:6px;justify-content:center;
+            max-width:260px;max-height:130px;overflow-y:auto;
+            background:var(--bg-card);border:1px solid var(--border-light);
+            border-radius:var(--radius-md);padding:var(--space-2);
+          "></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" data-i18n="accountNameLabel">Nome da Conta</label>
+          <input type="text" id="edit-account-name" class="form-input" maxlength="32"
+            data-i18n-placeholder="accountNamePlaceholder" placeholder="Ex: Principal, DeFi, Savings...">
+        </div>
+        <button id="btn-save-edit-account" class="btn btn-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+            <polyline points="17 21 17 13 7 13 7 21" />
+            <polyline points="7 3 7 8 15 8" />
+          </svg>
+          <span data-i18n="saveChangesBtn">Salvar Alterações</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Ver Chaves da Conta -->
+  <div id="modal-view-keys" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:430px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="viewKeysTitle">🔐 Chaves da Conta</h3>
+        <button id="btn-close-view-keys" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-4);">
+        <div
+          style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-md);padding:var(--space-3);display:flex;gap:var(--space-2);align-items:flex-start;">
+          <span style="font-size:1.1rem;flex-shrink:0;">⚠️</span>
+          <div style="font-size:var(--text-xs);color:var(--text-danger);line-height:1.5;"
+            data-i18n="viewKeysSecurityWarning">
+            <strong>NUNCA compartilhe suas chaves privadas ou seed phrase.</strong> Qualquer pessoa com acesso pode
+            roubar todos os seus fundos permanentemente.
+          </div>
+        </div>
+        <!-- PIN Auth section -->
+        <div id="view-keys-pin-section" style="display:flex;flex-direction:column;gap:var(--space-3);">
+          <div style="font-size:var(--text-sm);color:var(--text-secondary);text-align:center;"
+            data-i18n="viewKeysPasswordLabel">Digite sua senha para revelar as chaves</div>
+          <div style="position:relative;">
+            <input type="password" id="view-keys-password" class="form-input"
+              data-i18n-placeholder="viewKeysPasswordPlaceholder" placeholder="Senha da carteira..."
+              style="padding-right:42px;">
+            <svg class="password-toggle-btn" data-target="view-keys-password" xmlns="http://www.w3.org/2000/svg"
+              width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+              stroke-linecap="round" stroke-linejoin="round">
+              <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle class="eye-open" cx="12" cy="12" r="3" />
+              <path class="eye-closed" style="display:none;"
+                d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+              <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" />
+            </svg>
+          </div>
+          <button id="btn-reveal-keys" class="btn btn-danger" style="font-weight:700;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span data-i18n="btnRevealKeys">Revelar Chaves</span>
+          </button>
+        </div>
+        <!-- Revealed section (hidden until auth) -->
+        <div id="view-keys-revealed-section" style="display:none;flex-direction:column;gap:var(--space-3);">
+          <div>
+            <div
+              style="font-size:var(--text-xs);font-weight:var(--fw-bold);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-1);"
+              data-i18n="viewKeysPublicAddress">📍 Endereço Público</div>
+            <div style="position:relative;">
+              <div id="view-keys-address"
+                style="font-family:var(--font-mono);font-size:var(--text-2xs);word-break:break-all;background:var(--bg-input);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);padding-right:36px;color:var(--text-info);line-height:1.6;">
+                —</div>
+              <button class="copy-key-btn" data-target="view-keys-address"
+                style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;"
+                data-i18n-title="copyBtn" title="Copiar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div>
+            <div
+              style="font-size:var(--text-xs);font-weight:var(--fw-bold);color:var(--text-muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-1);"
+              data-i18n="viewKeysPublicKey">🔓 Chave Pública</div>
+            <div style="position:relative;">
+              <div id="view-keys-pubkey"
+                style="font-family:var(--font-mono);font-size:var(--text-2xs);word-break:break-all;background:var(--bg-input);border:1px solid var(--border-light);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);padding-right:36px;color:var(--text-secondary);line-height:1.6;">
+                —</div>
+              <button class="copy-key-btn" data-target="view-keys-pubkey"
+                style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:var(--text-muted);padding:4px;"
+                data-i18n-title="copyBtn" title="Copiar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div>
+            <div
+              style="font-size:var(--text-xs);font-weight:var(--fw-bold);color:rgba(239,68,68,0.9);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-1);">
+              <span data-i18n="viewKeysPrivateKey">🔑 Chave Privada</span> <span
+                style="font-size:9px;">(CONFIDENCIAL)</span>
+            </div>
+            <div style="position:relative;">
+              <div id="view-keys-privkey"
+                style="font-family:var(--font-mono);font-size:var(--text-2xs);word-break:break-all;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);padding-right:36px;color:#ef4444;line-height:1.6;">
+                —</div>
+              <button class="copy-key-btn" data-target="view-keys-privkey"
+                style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;color:rgba(239,68,68,0.6);padding:4px;"
+                data-i18n-title="copyBtn" title="Copiar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div id="view-keys-seed-section">
+            <div
+              style="font-size:var(--text-xs);font-weight:var(--fw-bold);color:rgba(239,68,68,0.9);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:var(--space-1);">
+              <span data-i18n="viewKeysSeedPhrase">📜 Seed Phrase</span> <span style="font-size:9px;">(EXTREMAMENTE
+                CONFIDENCIAL)</span>
+            </div>
+            <div style="position:relative;">
+              <div id="view-keys-seed"
+                style="font-family:var(--font-mono);font-size:var(--text-xs);word-break:break-all;background:rgba(239,68,68,0.05);border:2px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:var(--space-3);padding-right:36px;color:#ef4444;line-height:1.8;letter-spacing:0.02em;">
+                —</div>
+              <button class="copy-key-btn" data-target="view-keys-seed"
+                style="position:absolute;right:6px;top:12px;background:none;border:none;cursor:pointer;color:rgba(239,68,68,0.6);padding:4px;"
+                data-i18n-title="copyBtn" title="Copiar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div style="font-size:var(--text-xs);color:var(--text-muted);text-align:center;">
+            🔒 <span data-i18n="viewKeysCountdown">Informações ocultadas automaticamente em</span> <span
+              id="view-keys-countdown" style="color:var(--text-warning);font-weight:700;">60</span>s
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Selecionar Blockchain -->
+
+  <div id="modal-blockchain-select" class="b2-modal">
+    <div class="b2-modal-content" style="max-width:440px;">
+      <div class="b2-modal-header"
+        style="padding-bottom:var(--space-3);border-bottom:1px solid var(--border-subtle);display:flex;justify-content:space-between;align-items:center;">
+        <h3 class="b2-modal-title">Selecionar Blockchain</h3>
+        <div style="display:flex;align-items:center;gap:var(--space-2);">
+          <button id="btn-modal-add-network-shortcut" class="btn btn-outline"
+            style="padding:4px 8px;font-size:var(--text-xs);border-radius:var(--radius-sm);display:inline-flex;align-items:center;gap:4px;"
+            title="Adicionar Rede Customizada">
+            <span>+ Rede</span>
+          </button>
+          <button id="btn-close-blockchain-select" class="b2-modal-close"
+            style="position:static;line-height:1;margin-left:8px;">&times;</button>
+        </div>
+      </div>
+      <div style="padding:var(--space-3) 0 var(--space-2) 0;">
+        <input type="text" id="modal-blockchain-search" class="form-input" placeholder="Buscar rede ou símbolo...">
+      </div>
+      <div id="modal-blockchain-list-container"
+        style="overflow-y:auto;max-height:360px;display:flex;flex-direction:column;gap:var(--space-2);padding-right:2px;">
+        <!-- Preenchido via renderer.js -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Adicionar Token (Engine-Aware) -->
+  <div id="modal-add-token" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:420px;">
+      <div class="b2-modal-header">
+        <h3 id="add-token-modal-title" class="b2-modal-title">Adicionar Token</h3>
+        <button id="btn-close-add-token" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        <!-- Info banner dinâmico por engine -->
+        <div id="add-token-engine-info" class="info-banner">
+          <div class="info-banner-icon">ℹ️</div>
+          <div class="info-banner-text">
+            <strong id="add-token-engine-name">EVM</strong>
+            <span id="add-token-engine-desc">Tokens compatíveis com padrão ERC-20. Insira o endereço do contrato
+              inteligente.</span>
+          </div>
+        </div>
+        <!-- Rede ativa exibida -->
+        <div id="add-token-chain-chip"
+          style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--bg-hover);border:1px solid var(--border-light);border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:var(--fw-semibold);color:var(--text-secondary);align-self:flex-start;">
+          <span id="add-token-chain-dot"
+            style="width:6px;height:6px;border-radius:50%;background:var(--color-primary);"></span>
+          <span id="add-token-chain-name">Rede Ativa</span>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" id="add-token-contract-label">Endereço do Contrato</label>
+          <input type="text" id="add-token-contract" class="form-input" placeholder="0x...">
+          <span id="add-token-contract-hint"
+            style="font-size:var(--text-2xs);color:var(--text-muted);margin-top:2px;">Formato: 0x seguido de 40
+            caracteres hexadecimais</span>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Nome do Token (opcional)</label>
+          <input type="text" id="add-token-name" class="form-input" placeholder="Ex: Tether USD">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Símbolo</label>
+            <input type="text" id="add-token-symbol" class="form-input" placeholder="Ex: USDT">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Decimais</label>
+            <input type="number" id="add-token-decimals" class="form-input" placeholder="18" value="18">
+          </div>
+        </div>
+        <button id="btn-add-token-submit" class="btn btn-primary" style="margin-top:var(--space-1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Adicionar Token
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Adicionar NFT Customizado -->
+  <div id="modal-add-nft" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:420px;">
+      <div class="b2-modal-header">
+        <h3 id="add-nft-modal-title" class="b2-modal-title">Adicionar NFT</h3>
+        <button id="btn-close-add-nft" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        <!-- Rede ativa exibida -->
+        <div id="add-nft-chain-chip"
+          style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px;background:var(--bg-hover);border:1px solid var(--border-light);border-radius:var(--radius-full);font-size:var(--text-xs);font-weight:var(--fw-semibold);color:var(--text-secondary);align-self:flex-start;">
+          <span id="add-nft-chain-dot"
+            style="width:6px;height:6px;border-radius:50%;background:var(--color-primary);"></span>
+          <span id="add-nft-chain-name">Rede Ativa</span>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label" id="add-nft-contract-label">ID do Ativo ou Endereço do Contrato</label>
+          <input type="text" id="add-nft-contract" class="form-input" placeholder="0x... ou ID do Ativo">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Token ID / ID do NFT (opcional)</label>
+          <input type="text" id="add-nft-token-id" class="form-input" placeholder="Ex: 1">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Nome do NFT</label>
+          <input type="text" id="add-nft-name" class="form-input" placeholder="Ex: Cyber Punk #001">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Coleção (opcional)</label>
+          <input type="text" id="add-nft-collection" class="form-input" placeholder="Ex: CryptoPunks">
+        </div>
+        <button id="btn-add-nft-submit" class="btn btn-primary" style="margin-top:var(--space-1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Adicionar NFT
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Adicionar Rede Customizada (Grid-Style Engine Selector) -->
+  <div id="modal-add-network" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:440px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="addBlockchain">Adicionar Rede Customizada</h3>
+        <button id="btn-close-add-network" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+        <!-- STEP 1: Selecionar Engine (Standard Grid Layout) -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Tipo de Blockchain (Engine)</label>
+          <div id="add-net-engine-grid" class="engine-selector-grid">
+            <div class="engine-option selected" data-engine="EVM" data-coin-type="60" data-decimals="18">
+              <div class="engine-option-icon" style="background:linear-gradient(135deg,#6366f1,#8b5cf6);">⟠</div>
+              <span class="engine-option-label">EVM</span>
+              <span class="engine-option-desc">ETH, BSC, Polygon...</span>
+            </div>
+            <div class="engine-option" data-engine="Waves" data-coin-type="3600" data-decimals="8">
+              <div class="engine-option-icon" style="background:linear-gradient(135deg,#0055ff,#38bdf8);">〰</div>
+              <span class="engine-option-label">Waves</span>
+              <span class="engine-option-desc">LPoS, Tokens, NFTs</span>
+            </div>
+            <div class="engine-option" data-engine="Bitcoin" data-coin-type="0" data-decimals="8">
+              <div class="engine-option-icon" style="background:linear-gradient(135deg,#f59e0b,#eab308);">₿</div>
+              <span class="engine-option-label">Bitcoin</span>
+              <span class="engine-option-desc">UTXO, SegWit</span>
+            </div>
+            <div class="engine-option" data-engine="Solana" data-coin-type="501" data-decimals="9">
+              <div class="engine-option-icon" style="background:linear-gradient(135deg,#14f195,#9945ff);">◎</div>
+              <span class="engine-option-label">Solana</span>
+              <span class="engine-option-desc">SPL Tokens</span>
+            </div>
+            <div class="engine-option" data-engine="Tron" data-coin-type="195" data-decimals="6">
+              <div class="engine-option-icon" style="background:linear-gradient(135deg,#ec092c,#ff4444);">◆</div>
+              <span class="engine-option-label">Tron</span>
+              <span class="engine-option-desc">TRC-20</span>
+            </div>
+            <div class="engine-option" data-engine="Custom" data-coin-type="0" data-decimals="8">
+              <div class="engine-option-icon" style="background:linear-gradient(135deg,#64748b,#94a3b8);">⚙</div>
+              <span class="engine-option-label">Custom</span>
+              <span class="engine-option-desc">Outra engine</span>
+            </div>
+          </div>
+        </div>
+        <!-- STEP 2: Dados da rede -->
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">Nome da Rede</label>
+          <input type="text" id="add-net-name" class="form-input" placeholder="Ex: My Custom Chain">
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Símbolo</label>
+            <input type="text" id="add-net-symbol" class="form-input" placeholder="Ex: MCC">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Chain ID</label>
+            <input type="number" id="add-net-chain-id" class="form-input" placeholder="Ex: 1">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-2);">
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Coin Type (BIP-44)</label>
+            <input type="number" id="add-net-coin-type" class="form-input" placeholder="60" value="60">
+          </div>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">Decimais</label>
+            <input type="number" id="add-net-decimals" class="form-input" placeholder="18" value="18">
+          </div>
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">URL do Nó RPC</label>
+          <input type="text" id="add-net-rpc" class="form-input" placeholder="https://rpc.example.com">
+        </div>
+        <div class="form-group" style="margin-bottom:0;">
+          <label class="form-label">URL do Explorer (opcional)</label>
+          <input type="text" id="add-net-explorer" class="form-input" placeholder="https://explorer.example.com">
+        </div>
+        <button id="btn-submit-add-network" class="btn btn-primary" style="margin-top:var(--space-1);">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          Adicionar Rede
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Selecionar Provedor de Cotação -->
+  <div id="modal-price-source" class="b2-modal">
+    <div class="b2-modal-content" style="max-width:380px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title">Provedor de Cotações</h3>
+        <button id="btn-close-price-source" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-2);">
+        <div class="price-source-option-card" data-value="auto">
+          <div
+            style="width:36px;height:36px;border-radius:var(--radius-sm);background:linear-gradient(135deg,#10b981,rgba(255,255,255,0.1));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+            ⚡</div>
+          <div style="flex:1;">
+            <div class="option-title">Automático</div>
+            <div class="option-desc">CoinGecko ➔ Yahoo ➔ DEXs</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="price-source-option-card" data-value="coingecko">
+          <div
+            style="width:36px;height:36px;border-radius:var(--radius-sm);background:linear-gradient(135deg,#8bc34a,rgba(255,255,255,0.1));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+            🦎</div>
+          <div style="flex:1;">
+            <div class="option-title">CoinGecko</div>
+            <div class="option-desc">API pública CoinGecko</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="price-source-option-card" data-value="yahoofinance">
+          <div
+            style="width:36px;height:36px;border-radius:var(--radius-sm);background:linear-gradient(135deg,#7b1fa2,rgba(255,255,255,0.1));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+            💜</div>
+          <div style="flex:1;">
+            <div class="option-title">Yahoo Finance</div>
+            <div class="option-desc">Preços via proxy</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="price-source-option-card" data-value="dex">
+          <div
+            style="width:36px;height:36px;border-radius:var(--radius-sm);background:linear-gradient(135deg,#ff007a,rgba(255,255,255,0.1));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">
+            🦄</div>
+          <div style="flex:1;">
+            <div class="option-title">DEX Subgraphs</div>
+            <div class="option-desc">Uniswap V3 on-chain</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Selecionar Idioma -->
+  <div id="modal-language-select" class="b2-modal">
+    <div class="b2-modal-content" style="max-width:380px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="selectLanguageTitle">Selecionar Idioma</h3>
+        <button id="btn-close-language-select" class="b2-modal-close">&times;</button>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-top:var(--space-2);">
+        <div class="language-option-card" data-value="pt">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇧🇷</div>
+          <div style="flex:1;">
+            <div class="option-title">Português</div>
+            <div class="option-desc">Brasil &amp; Portugal</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="en">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇺🇸</div>
+          <div style="flex:1;">
+            <div class="option-title">English</div>
+            <div class="option-desc">United States &amp; UK</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="es">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇪🇸</div>
+          <div style="flex:1;">
+            <div class="option-title">Español</div>
+            <div class="option-desc">España &amp; Latinoamérica</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="fr">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇫🇷</div>
+          <div style="flex:1;">
+            <div class="option-title">Français</div>
+            <div class="option-desc">France &amp; Canada</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="zh">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇨🇳</div>
+          <div style="flex:1;">
+            <div class="option-title">简体中文</div>
+            <div class="option-desc">中国 (Chinese)</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="ja">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇯🇵</div>
+          <div style="flex:1;">
+            <div class="option-title">日本語</div>
+            <div class="option-desc">日本 (Japanese)</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="ko">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇰🇷</div>
+          <div style="flex:1;">
+            <div class="option-title">한국어</div>
+            <div class="option-desc">대한민국 (Korean)</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="de">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇩🇪</div>
+          <div style="flex:1;">
+            <div class="option-title">Deutsch</div>
+            <div class="option-desc">Deutschland (German)</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="it">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇮🇹</div>
+          <div style="flex:1;">
+            <div class="option-title">Italiano</div>
+            <div class="option-desc">Italia (Italian)</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+        <div class="language-option-card" data-value="ru">
+          <div style="font-size:1.4rem;flex-shrink:0;">🇷🇺</div>
+          <div style="flex:1;">
+            <div class="option-title">Русский</div>
+            <div class="option-desc">Россия (Russian)</div>
+          </div>
+          <div class="option-check-circle"
+            style="width:14px;height:14px;border-radius:50%;border:1px solid var(--border-light);display:flex;align-items:center;justify-content:center;">
+            <div class="inner-dot"
+              style="width:6px;height:6px;border-radius:50%;background:var(--color-secondary);display:none;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Mais Opções (Testnet) -->
+  <div id="modal-more-options" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:380px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="moreOptionsTitle">Mais Opções</h3>
+        <button id="btn-close-more-options" class="b2-modal-close">&times;</button>
+      </div>
+      <div class="b2-switch-container">
+        <div class="b2-switch-info">
+          <div class="b2-switch-label" data-i18n="enableTestnet">Ativar testnet</div>
+          <div class="b2-switch-desc" data-i18n="enableTestnetDesc">Exibe botão para alternar entre Mainnet e Testnet no
+            cabeçalho.</div>
+        </div>
+        <label class="b2-switch">
+          <input type="checkbox" id="switch-enable-testnet">
+          <span class="b2-switch-slider"></span>
+        </label>
+      </div>
+      <div class="b2-switch-container" id="biometric-switch-container"
+        style="display:none; border-top:1px solid var(--border-subtle); padding-top:var(--space-3); margin-top:var(--space-2);">
+        <div class="b2-switch-info">
+          <div class="b2-switch-label" data-i18n="enableBiometrics">Desbloqueio por Biometria</div>
+          <div class="b2-switch-desc" data-i18n="enableBiometricsDesc">Usa biometria (digital/FaceID) para desbloquear a
+            carteira.</div>
+        </div>
+        <label class="b2-switch">
+          <input type="checkbox" id="switch-enable-biometrics">
+          <span class="b2-switch-slider"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================================================================
+       APP CONTAINER — DUAL PANEL
+       ================================================================ -->
+  <div class="app-container">
+
+    <!-- PAINEL ESQUERDO: Wallet Shell -->
+    <div class="wallet-shell glow-gold">
+
+      <!-- Header -->
+      <div class="wallet-header">
+        <div class="wallet-logo">
+          <img src="src/img/logo_32.png" alt="B2" class="wallet-logo-img">
+          <div class="wallet-logo-text" data-i18n="appTitle">B2 Wallet</div>
+        </div>
+        <div class="header-actions">
+          <button id="b2-expand-btn" class="theme-toggle-btn" title="Expandir" style="display:none;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+              <polyline points="15 3 21 3 21 9" />
+              <line x1="10" y1="14" x2="21" y2="3" />
+            </svg>
+          </button>
+          <!-- Seletor de idioma (hidden, usado pelo app.js) -->
+          <select id="b2-language-selector" style="display:none;">
+            <option value="pt">PT</option>
+            <option value="en">EN</option>
+            <option value="es">ES</option>
+            <option value="fr">FR</option>
+            <option value="zh">ZH</option>
+            <option value="ja">JA</option>
+            <option value="ko">KO</option>
+            <option value="de">DE</option>
+            <option value="it">IT</option>
+            <option value="ru">RU</option>
+          </select>
+          <!-- Switcher de Rede (Mainnet / Testnet) -->
+          <button id="network-mode-switcher" class="mainnet" style="display:none;">
+            <span id="network-mode-switcher-label">Mainnet</span>
+          </button>
+          <!-- Trigger customizado de idioma -->
+          <div id="language-custom-trigger" class="account-chip"
+            style="cursor:pointer;gap:var(--space-1);font-size:var(--text-xs);height:30px;min-height:30px;max-height:30px;display:inline-flex;align-items:center;box-sizing:border-box;">
+            <span id="language-custom-flag">🇧🇷</span>
+            <span id="language-custom-value" style="font-weight:var(--fw-bold);">PT</span>
+            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </div>
+          <!-- Tema -->
+          <button id="b2-theme-toggle-btn" class="theme-toggle-btn" aria-label="Alternar tema">
+            <span id="theme-toggle-icon"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Área de Views -->
+      <div class="wallet-content">
+
+        <!-- VIEW 1: Bem-vindo (Onboarding) -->
+        <div id="view-welcome" class="wallet-view active">
+          <div style="text-align:center;margin:auto 0;display:flex;flex-direction:column;gap:var(--space-6);">
+            <div style="display:flex;justify-content:center;height:80px;align-items:center;">
+              <svg viewBox="0 0 24 24" width="72" height="72" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="filter:drop-shadow(0 0 18px rgba(245,158,11,0.55));animation:pulse 2.5s infinite;">
+                <path d="M12 2L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-3z" fill="url(#wg)"
+                  stroke="var(--color-primary)" stroke-width="1.5" stroke-linejoin="round" />
+                <path d="M12 6l-4 4h3v5h2v-5h3l-4-4z" fill="#000" />
+                <defs>
+                  <linearGradient id="wg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#fbbf24" />
+                    <stop offset="100%" stop-color="#d97706" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="welcome"
+                style="font-family:var(--font-ui);font-size:var(--text-xl);font-weight:var(--fw-extrabold);margin-bottom:var(--space-2);">
+                Bem-vindo à B2 Wallet</h2>
+              <p data-i18n="welcomeDesc"
+                style="font-size:var(--text-sm);color:var(--text-secondary);line-height:var(--lh-relaxed);">
+                Carteira multichain de auto-custódia com segurança de nível militar. Seus ativos, sua chave.
+              </p>
+            </div>
+            <div
+              style="background:var(--bg-card);border:1px solid var(--border-light);padding:var(--space-3) var(--space-4);border-radius:var(--radius-md);display:flex;gap:var(--space-2);align-items:center;font-size:var(--text-sm);color:var(--text-secondary);">
+              <input type="checkbox" id="welcome-terms-checkbox"
+                style="cursor:pointer;width:16px;height:16px;accent-color:var(--color-primary);">
+              <label for="welcome-terms-checkbox" style="cursor:pointer;user-select:none;line-height:var(--lh-normal);"
+                data-i18n="agreeTermsLabel">Concordo com os Termos de Uso</label>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+              <button id="btn-create-wallet" class="btn btn-primary btn-lg" data-i18n="btnCreate" disabled>Criar Nova
+                Carteira</button>
+              <button id="btn-import-wallet" class="btn btn-outline btn-lg" data-i18n="btnImport" disabled>Importar com
+                Semente</button>
+            </div>
+            <p data-i18n="termsText"
+              style="font-size:var(--text-xs);color:var(--text-muted);line-height:var(--lh-relaxed);">
+              A B2 Wallet é não-custodial. A perda da semente resulta em perda permanente e irreversível de fundos.
+            </p>
+          </div>
+        </div>
+
+        <!-- VIEW 2: Criar Senha e Gerar Semente -->
+        <div id="view-create-password" class="wallet-view">
+          <div style="display:flex;flex-direction:column;gap:var(--space-4);min-height:100%;">
+            <div class="view-header">
+              <h2 id="create-password-title" class="view-title" data-i18n="passwordTitle">Defina sua Senha</h2>
+              <p class="view-subtitle" data-i18n="passwordDesc">Sua senha é usada para cifrar a semente localmente via
+                Argon2id.</p>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="inputPassword">Senha Forte</label>
+              <div class="form-input-container">
+                <input type="password" id="password-input" class="form-input" placeholder="Senha segura...">
+                <svg class="password-toggle-btn" data-target="password-input" xmlns="http://www.w3.org/2000/svg"
+                  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle class="eye-open" cx="12" cy="12" r="3" />
+                  <path class="eye-closed" style="display:none;"
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="form-label" data-i18n="inputConfirmPassword">Confirmar Senha</label>
+              <div class="form-input-container">
+                <input type="password" id="password-confirm-input" class="form-input" placeholder="Repita a senha...">
+                <svg class="password-toggle-btn" data-target="password-confirm-input" xmlns="http://www.w3.org/2000/svg"
+                  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle class="eye-open" cx="12" cy="12" r="3" />
+                  <path class="eye-closed" style="display:none;"
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Painel de Requisitos de Segurança da Senha -->
+            <div class="pwd-requirements-panel glass-card"
+              style="padding:var(--space-3) var(--space-4); display:flex; flex-direction:column; gap:var(--space-2); margin-bottom:var(--space-2);">
+              <div style="font-size:var(--text-xs); font-weight:var(--fw-bold); color:var(--text-secondary);"
+                data-i18n="pwdRequirementsTitle">Requisitos de Segurança da Senha:</div>
+              <div id="req-length"
+                style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-xs); color:var(--text-muted); transition: all 0.2s;">
+                <span class="req-icon" style="font-size: 10px;">❌</span>
+                <span data-i18n="pwdReqLength">Mais de 8 caracteres</span>
+              </div>
+              <div id="req-case"
+                style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-xs); color:var(--text-muted); transition: all 0.2s;">
+                <span class="req-icon" style="font-size: 10px;">❌</span>
+                <span data-i18n="pwdReqCase">Letras maiúsculas e minúsculas</span>
+              </div>
+              <div id="req-number"
+                style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-xs); color:var(--text-muted); transition: all 0.2s;">
+                <span class="req-icon" style="font-size: 10px;">❌</span>
+                <span data-i18n="pwdReqNumber">Pelo menos um número</span>
+              </div>
+              <div id="req-special"
+                style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-xs); color:var(--text-muted); transition: all 0.2s;">
+                <span class="req-icon" style="font-size: 10px;">❌</span>
+                <span data-i18n="pwdReqSpecial">Pelo menos um caractere especial (símbolo, sublinhado, etc.)</span>
+              </div>
+              <div id="req-match"
+                style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-xs); color:var(--text-muted); transition: all 0.2s;">
+                <span class="req-icon" style="font-size: 10px;">❌</span>
+                <span data-i18n="pwdReqMatch">Senhas coincidem</span>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" data-i18n="inputPin">PIN de Acesso Rápido (8 dígitos)</label>
+              <div class="form-input-container">
+                <input type="password" id="pin-input" class="form-input" maxlength="8" pattern="[0-9]*"
+                  inputmode="numeric" placeholder="12345678">
+                <svg class="password-toggle-btn" data-target="pin-input" xmlns="http://www.w3.org/2000/svg" width="16"
+                  height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle class="eye-open" cx="12" cy="12" r="3" />
+                  <path class="eye-closed" style="display:none;"
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </div>
+            </div>
+
+            <!-- Painel de Requisitos do PIN -->
+            <div class="pin-requirements-panel glass-card"
+              style="padding:var(--space-3) var(--space-4); display:flex; flex-direction:column; gap:var(--space-2); margin-top: -8px; margin-bottom: var(--space-2);">
+              <div id="req-pin"
+                style="display:flex; align-items:center; gap:var(--space-2); font-size:var(--text-xs); color:var(--text-muted); transition: all 0.2s;">
+                <span class="req-icon" style="font-size: 10px;">❌</span>
+                <span data-i18n="pinReqLabel">PIN de exatamente 8 dígitos</span>
+              </div>
+            </div>
+
+            <button id="btn-create-wallet-submit" class="btn btn-primary btn-lg" data-i18n="btnCreateWalletSubmit">Criar
+              Carteira</button>
+            <!-- Grade da semente (aparece após criar) -->
+            <div id="seed-generation-outcome" class="glass-card"
+              style="display:none;flex-direction:column;gap:var(--space-4);padding:var(--space-4);animation:fadeIn 0.3s ease-out;">
+              <div>
+                <h3
+                  style="font-size:var(--text-base);font-weight:var(--fw-bold);color:var(--color-primary);margin-bottom:var(--space-1);"
+                  data-i18n="seedRecoveryTitle">🔐 Semente de Recuperação</h3>
+                <p style="font-size:var(--text-xs);color:var(--text-secondary);line-height:var(--lh-relaxed);"
+                  data-i18n="seedRecoveryDesc">Anote estas 12 palavras em papel físico. NUNCA compartilhe com ninguém.
+                </p>
+              </div>
+              <div id="seed-phrase-display" class="seed-grid selectable"></div>
+              <div style="display:flex;gap:var(--space-2);">
+                <button id="btn-copy-seed-inline" class="btn btn-outline" style="flex:1;" data-i18n="btnCopySeed">Copiar
+                  Semente</button>
+                <button id="btn-export-seed-json" class="btn btn-outline" style="flex:1;"
+                  data-i18n="btnExportJson">Exportar JSON</button>
+              </div>
+              <button id="btn-create-password-proceed" class="btn btn-primary btn-lg"
+                data-i18n="btnProceedConfirmation">Prosseguir para Confirmação</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 3: Confirmar Semente -->
+        <div id="view-confirm-seed" class="wallet-view">
+          <div style="display:flex;flex-direction:column;gap:var(--space-4);min-height:100%;">
+            <div class="view-header" style="flex-shrink:0;">
+              <h2 class="view-title" style="color:var(--color-primary);" data-i18n="confirmBackupTitle">Confirmar Backup
+              </h2>
+              <p class="view-subtitle" data-i18n="confirmBackupDesc">Preencha as 4 palavras solicitadas da sua semente
+                para confirmar que você realizou o backup.</p>
+            </div>
+            <div id="confirm-seed-inputs-container"></div>
+            <div
+              style="background:var(--bg-card);border:1px solid var(--border-light);padding:var(--space-4);border-radius:var(--radius-md);display:flex;flex-direction:column;gap:var(--space-3);flex-shrink:0;">
+              <div style="display:flex;gap:var(--space-2);align-items:flex-start;">
+                <input type="checkbox" id="confirm-seed-risk-loss"
+                  style="cursor:pointer;width:16px;height:16px;margin-top:2px;accent-color:var(--color-primary);">
+                <label for="confirm-seed-risk-loss"
+                  style="cursor:pointer;font-size:var(--text-xs);color:var(--text-secondary);line-height:var(--lh-relaxed);user-select:none;"
+                  data-i18n="confirmSeedCheckbox1">Entendo que a B2 Wallet é de auto-custódia e que não é possível
+                  recuperar minha semente se eu a perder.</label>
+              </div>
+              <div style="display:flex;gap:var(--space-2);align-items:flex-start;">
+                <input type="checkbox" id="confirm-seed-risk-opensource"
+                  style="cursor:pointer;width:16px;height:16px;margin-top:2px;accent-color:var(--color-primary);">
+                <label for="confirm-seed-risk-opensource"
+                  style="cursor:pointer;font-size:var(--text-xs);color:var(--text-secondary);line-height:var(--lh-relaxed);user-select:none;"
+                  data-i18n="confirmSeedCheckbox2">Concordo que a B2 Wallet não garante a segurança dos meus fundos em
+                  caso de vazamento ou bugs no código open-source.</label>
+              </div>
+            </div>
+            <button id="btn-confirm-seed-submit" class="btn btn-primary btn-lg" disabled
+              style="margin-top:auto;flex-shrink:0;" data-i18n="btnConfirmSeedSubmit">Confirmar e Ativar
+              Carteira</button>
+          </div>
+        </div>
+
+        <!-- VIEW 4: Diretório de Endereços -->
+        <div id="view-addresses-list" class="wallet-view">
+          <div style="display:flex;flex-direction:column;height:100%;">
+            <div class="view-header">
+              <h2 class="view-title" data-i18n="addressesListTitle">Seus Endereços Públicos</h2>
+              <p class="view-subtitle" data-i18n="addressesListDesc">Endereços derivados determinísticos para todas as
+                redes suportadas.</p>
+            </div>
+            <div id="derived-addresses-directory-container"
+              style="display:flex;flex-direction:column;gap:var(--space-2);overflow-y:auto;flex:1;padding-right:4px;margin-bottom:var(--space-4);">
+            </div>
+            <button id="btn-addresses-list-proceed" class="btn btn-primary btn-lg" style="flex-shrink:0;"
+              data-i18n="btnAddressesListProceed">Ir para a Dashboard →</button>
+          </div>
+        </div>
+
+        <!-- ================================================================= -->
+        <!-- VIEW 5: Carteira Bloqueada (DESBLOQUEIO / UNLOCK PASSWORD VIEW)   -->
+        <!-- ================================================================= -->
+        <div id="view-locked" class="wallet-view">
+          <div style="text-align:center;margin:auto 0;display:flex;flex-direction:column;gap:var(--space-5);">
+            <div style="display:flex;justify-content:center;">
+              <svg viewBox="0 0 24 24" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="filter:drop-shadow(0 0 16px rgba(124,58,237,0.45));animation:pulse 2s infinite;">
+                <rect x="3" y="11" width="18" height="11" rx="2" fill="url(#lpg)" stroke="var(--color-secondary)"
+                  stroke-width="1.5" />
+                <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="var(--color-secondary)" stroke-width="2"
+                  stroke-linecap="round" />
+                <circle cx="12" cy="16" r="2" fill="var(--color-primary)" />
+                <defs>
+                  <linearGradient id="lpg" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stop-color="#7c3aed" />
+                    <stop offset="100%" stop-color="#f59e0b" />
+                  </linearGradient>
+                </defs>
+              </svg>
+            </div>
+            <div>
+              <h2 data-i18n="lockedScreenTitle"
+                style="font-size:var(--text-xl);font-weight:var(--fw-bold);margin-bottom:var(--space-2);">Sua Carteira
+                está Protegida</h2>
+              <p style="font-size:var(--text-sm);color:var(--text-secondary);" data-i18n="lockedScreenDesc">Digite sua
+                senha para desbloquear.</p>
+            </div>
+            <div class="form-group" style="text-align:left;">
+              <label class="form-label" data-i18n="accessPasswordLabel">Senha de Acesso</label>
+              <div class="form-input-container">
+                <input type="password" id="unlock-password-input" class="form-input"
+                  data-i18n-placeholder="unlockPasswordPlaceholder" placeholder="Digite sua senha...">
+                <svg class="password-toggle-btn" data-target="unlock-password-input" xmlns="http://www.w3.org/2000/svg"
+                  width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                  <circle class="eye-open" cx="12" cy="12" r="3" />
+                  <path class="eye-closed" style="display:none;"
+                    d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                  <line class="eye-closed" style="display:none;" x1="1" y1="1" x2="23" y2="23" />
+                </svg>
+              </div>
+            </div>
+            <button id="unlock-submit-btn" class="btn btn-primary btn-lg" data-i18n="unlockBtn">Desbloquear</button>
+            <button id="unlock-biometric-btn" class="btn btn-outline btn-lg"
+              style="margin-top:var(--space-2); display:none; justify-content:center; align-items:center; gap:var(--space-2);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-fingerprint">
+                <path d="M12 10a2 2 0 0 0-2 2c0 .5-.1 1-.4 1.4L6 20" />
+                <path d="M14 12a4 4 0 0 0-8 0v1.2L3 18" />
+                <path d="M18 12a6 6 0 0 0-12 0v5.4L3.6 22" />
+                <path d="M22 12A10 10 0 0 0 2 12v6.6l1.2 2.4" />
+              </svg>
+              <span data-i18n="unlockBiometricBtn">Desbloquear com Biometria</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW 6: Dashboard Principal -->
+        <div id="view-dashboard" class="wallet-view">
+
+          <!-- Trigger do seletor de blockchain -->
+          <div id="blockchain-selector-trigger" class="glass-card"
+            style="padding:var(--space-3) var(--space-4);display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-3);cursor:pointer;border:1px solid var(--border-light);transition:all 0.2s;">
+            <div style="display:flex;align-items:center;gap:var(--space-3);">
+              <div style="position:relative;flex-shrink:0;">
+                <img id="selected-chain-logo" src="src/img/waves.svg"
+                  style="width:24px;height:24px;border-radius:50%;object-fit:contain;border:1px solid var(--border-light);">
+                <div class="network-status-dot"
+                  style="position:absolute;bottom:-1px;right:-1px;width:7px;height:7px;border:1.5px solid var(--bg-main);">
+                </div>
+              </div>
+              <div style="display:flex;flex-direction:column;gap:1px;">
+                <span id="selected-chain-name"
+                  style="font-size:var(--text-sm);font-weight:var(--fw-semibold);color:var(--text-primary);">Waves</span>
+                <span style="font-size:var(--text-2xs);color:var(--text-muted);font-weight:var(--fw-medium);"
+                  data-i18n="activeNetworkStatus">Rede Ativa • Online</span>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:var(--space-2);">
+              <span style="font-size:var(--text-xs);color:var(--text-muted);" data-i18n="changeBtn">Mudar</span>
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                style="color:var(--text-muted);">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Card de Saldo + Endereço (NOVO: address no topo) -->
+          <div id="active-chain-header" class="dashboard-balance-header glow-gold">
+            <!-- Chip de conta ativa -->
+            <div style="display:flex;justify-content:center;margin-bottom:var(--space-2);">
+              <div id="account-chip-trigger" class="account-chip" style="cursor:pointer;">
+                <span class="account-chip-dot"></span>
+                <span id="account-chip-label">Conta Principal</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </div>
+            </div>
+            <!-- Endereço clicável para copiar -->
+            <div style="display:flex;justify-content:center;margin-bottom:var(--space-3);">
+              <div id="active-chain-address-badge" class="address-badge" data-i18n-title="clickToCopy"
+                title="Clique para copiar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                  <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+                </svg>
+                <span id="active-chain-address-text" class="address-badge-text">—</span>
+              </div>
+            </div>
+            <!-- Label e saldo -->
+            <div class="balance-label" id="active-chain-header-title" data-i18n="totalBalance">SALDO ESTIMADO</div>
+            <div class="balance-fiat-primary" id="dashboard-total-balance">$ 0.00</div>
+            <div class="balance-crypto-secondary" id="active-chain-header-crypto">0.0000 NATIVE</div>
+            <!-- Saldo Confirmado + Pendente (exibido quando há dados disponíveis) -->
+            <div id="balance-status-chips"
+              style="display:none; justify-content:center; gap:8px; margin-top:8px; flex-wrap:wrap;">
+              <div id="balance-chip-confirmed"
+                style="display:inline-flex;align-items:center;gap:5px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.25);border-radius:20px;padding:3px 10px;font-size:0.6rem;font-family:var(--font-tech),monospace;color:#10b981;font-weight:700;letter-spacing:0.04em;">
+                <svg width="7" height="7" viewBox="0 0 10 10">
+                  <circle cx="5" cy="5" r="5" fill="#10b981" />
+                </svg>
+                <span id="balance-chip-confirmed-text">Confirmado: 0.00</span>
+              </div>
+              <div id="balance-chip-pending"
+                style="display:none;align-items:center;gap:5px;background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:20px;padding:3px 10px;font-size:0.6rem;font-family:var(--font-tech),monospace;color:#f59e0b;font-weight:700;letter-spacing:0.04em;">
+                <svg width="7" height="7" viewBox="0 0 10 10">
+                  <circle cx="5" cy="5" r="4" fill="none" stroke="#f59e0b" stroke-width="2" />
+                  <circle cx="5" cy="5" r="2" fill="#f59e0b" opacity="0.6" />
+                </svg>
+                <span id="balance-chip-pending-text">Pendente: 0.00</span>
+              </div>
+            </div>
+            <!-- Compact Resources Widget for Blockchains with active non-token resources (e.g. TRON, Waves, etc.) -->
+            <div id="active-chain-resources-summary"
+              style="display:none; width: 100%; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; flex-direction: column; gap: 8px;">
+            </div>
+            <!-- Official Faucet Container (Testnet only) -->
+            <div id="active-chain-faucet-container"
+              style="display:none; width: 100%; margin-top: 14px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; flex-direction: column; align-items: center; justify-content: center; gap: 6px;">
+            </div>
+          </div>
+
+          <!-- Botões de Ação Rápida -->
+          <div class="action-buttons-row" style="margin-top:var(--space-3);">
+            <button id="dashboard-btn-send" class="action-btn">
+              <div class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13" />
+                  <polyline points="22 2 15 22 11 13 2 9 22 2" />
+                </svg>
+              </div>
+              <span data-i18n="send">Enviar</span>
+            </button>
+            <button id="dashboard-btn-receive" class="action-btn">
+              <div class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </div>
+              <span data-i18n="receive">Receber</span>
+            </button>
+            <!-- Botão Faucet: visível apenas para testnet ativa -->
+            <button id="dashboard-btn-faucet" class="action-btn" style="display:none;">
+              <div class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22a7 7 0 0 0 7-7c0-4.3-7-11-7-11S5 10.7 5 15a7 7 0 0 0 7 7z" />
+                </svg>
+              </div>
+              <span data-i18n="faucet">Faucet</span>
+            </button>
+            <!-- Botão + Token: visível apenas para chains com supportsTokens e !autoDiscoverTokens -->
+            <button id="dashboard-btn-add-token" class="action-btn" style="display:none;">
+              <div class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+              </div>
+              <span data-i18n="addTokenBtnInline">+ Token</span>
+            </button>
+            <!-- Botão Leasing: visível apenas para chains com supportsStaking -->
+            <button id="dashboard-btn-leasing" class="action-btn action-btn-special" style="display:none;">
+              <div class="action-btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                  <path d="M2 17l10 5 10-5" />
+                  <path d="M2 12l10 5 10-5" />
+                </svg>
+              </div>
+              <span data-i18n="leasing">Leasing</span>
+            </button>
+          </div>
+
+          <!-- Botão de Recarregar com Última Data -->
+          <div class="reload-container">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <span id="last-update-indicator" class="pulse-indicator active"></span>
+              <span id="last-update-text">Carregando...</span>
+            </div>
+            <button id="dashboard-btn-reload" class="reload-btn">
+              <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                class="reload-icon-svg">
+                <polyline points="23 4 23 10 19 10" />
+                <polyline points="1 20 1 14 5 14" />
+                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15" />
+              </svg>
+              <span data-i18n="reload">Recarregar</span>
+            </button>
+          </div>
+
+          <!-- Seletor horizontal de blockchains -->
+          <div id="dashboard-active-chain-selector" class="chain-selector-scroll"></div>
+
+          <!-- Abas do Dashboard -->
+          <div class="dashboard-tabs-nav">
+            <button class="tab-btn active" data-tab="tokens" data-i18n="tokens">Tokens</button>
+            <button class="tab-btn" data-tab="nfts" id="tab-btn-nfts" data-i18n="nfts">NFTs</button>
+            <button class="tab-btn" data-tab="features" id="tab-btn-features"
+              data-i18n="tabFeatures">Ecosistema</button>
+            <button class="tab-btn" data-tab="history" data-i18n="history">Histórico</button>
+          </div>
+
+          <!-- Aba: Tokens -->
+          <div id="tab-content-tokens" class="tab-content"
+            style="display:flex;flex-direction:column;gap:var(--space-4);">
+            <!-- Donut Chart -->
+            <div class="glass-card"
+              style="padding:var(--space-4);display:flex;align-items:center;justify-content:space-around;gap:var(--space-3);min-height:130px;flex-shrink:0;">
+              <div style="position:relative;width:110px;height:110px;flex-shrink:0;">
+                <canvas id="portfolio-canvas" width="110" height="110"></canvas>
+              </div>
+              <div id="portfolio-legends"
+                style="display:flex;flex-direction:column;gap:var(--space-1);font-size:var(--text-xs);max-height:110px;overflow-y:auto;flex:1;">
+              </div>
+            </div>
+            <!-- Busca + Adicionar Rede -->
+            <div style="display:flex;gap:var(--space-2);flex-shrink:0;">
+              <div style="position:relative;flex:1;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-muted);pointer-events:none;">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                </svg>
+                <input type="text" id="search-input" class="form-input" placeholder="Buscar blockchain ou token..."
+                  data-i18n="searchPlaceholder" style="padding-left:36px;">
+              </div>
+              <!-- botão de adicionar rede removido conforme especificação (não mais disponível no painel de tokens) -->
+            </div>
+            <!-- Lista de Blockchains -->
+            <div id="blockchain-items-container" class="blockchain-list"></div>
+          </div>
+
+          <!-- Aba: NFTs -->
+          <div id="tab-content-nfts" class="tab-content" style="display:none; gap:var(--space-3);">
+            <div id="nft-actions-row"
+              style="display:flex; justify-content:flex-end; margin-bottom:var(--space-1); flex-shrink:0;">
+              <button id="btn-open-add-nft" class="btn btn-outline btn-sm"
+                style="display:inline-flex; align-items:center; gap:6px; font-size:var(--text-2xs); font-weight:var(--fw-bold); border-radius: var(--radius-full); padding: 6px 14px; border:1px solid var(--border-medium); cursor:pointer; background:var(--bg-card); transition:all var(--transition-fast);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"
+                  style="color:var(--color-primary);">
+                  <line x1="12" y1="5" x2="12" y2="19" />
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                </svg>
+                <span>+ NFT</span>
+              </button>
+            </div>
+            <div id="nfts-bento-grid" style="display:grid;grid-template-columns:repeat(2,1fr);gap:var(--space-3);">
+            </div>
+          </div>
+
+
+
+          <!-- Aba: Ecosistema -->
+          <div id="tab-content-features" class="tab-content" style="display:none;">
+            <!-- Card de feature do protocolo ativo (Leasing, EVM, etc.) -->
+            <div id="custom-blockchain-feature-card" style="display:none;"></div>
+          </div>
+
+          <!-- Aba: Histórico -->
+          <div id="tab-content-history" class="tab-content" style="display:none;">
+            <div id="history-transactions-list" style="display:flex;flex-direction:column;gap:var(--space-3);"></div>
+          </div>
+        </div>
+
+        <!-- VIEW 7: Leasing -->
+        <div id="view-leasing" class="wallet-view">
+          <div style="display:flex;flex-direction:column;height:100%;gap:var(--space-4);">
+            <div class="view-header" style="display:flex;align-items:center;gap:var(--space-3);">
+              <button id="btn-back-from-leasing" class="btn btn-ghost btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="15 18 9 12 15 6" />
+                </svg>
+              </button>
+              <div>
+                <h2 class="view-title" id="leasing-view-title">Leasing (LPoS)</h2>
+                <p class="view-subtitle" id="leasing-view-subtitle">Arrende seus tokens para validadores da rede e ganhe
+                  recompensas.</p>
+              </div>
+            </div>
+
+            <!-- Banner de "em breve" para redes não configuradas -->
+            <div id="leasing-pending-banner"
+              style="display:none;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-md);padding:var(--space-4);text-align:center;">
+              <div style="font-size:1.5rem;margin-bottom:var(--space-2);">⚙️</div>
+              <div
+                style="font-size:var(--text-sm);font-weight:var(--fw-semibold);color:var(--color-primary);margin-bottom:var(--space-1);">
+                Leasing em Configuração</div>
+              <p style="font-size:var(--text-xs);color:var(--text-secondary);">Os nós de validação desta rede ainda
+                estão sendo configurados. Esta funcionalidade estará disponível em breve.</p>
+            </div>
+
+            <!-- Conteúdo de leasing ativo -->
+            <div id="leasing-active-content"
+              style="display:flex;flex-direction:column;gap:var(--space-4);overflow-y:auto;flex:1;">
+              <!-- Nós disponíveis -->
+              <div>
+                <div class="feature-card-title">Selecionar Nó Validador</div>
+                <div id="leasing-nodes-list" style="display:flex;flex-direction:column;gap:var(--space-2);"></div>
+              </div>
+
+              <!-- Form de novo arrendamento -->
+              <div class="feature-card">
+                <div class="feature-card-title">Novo Arrendamento</div>
+                <div style="display:flex;gap:var(--space-2);align-items:flex-end;">
+                  <div class="form-group" style="margin-bottom:0;flex:1;">
+                    <label class="form-label">Montante</label>
+                    <input type="number" id="leasing-amount-input" class="form-input" placeholder="0.00" min="0"
+                      step="any">
+                  </div>
+                  <button id="btn-start-lease" class="btn btn-primary" style="flex-shrink:0;">Arrendar</button>
+                </div>
+                <div class="gas-fee-card" style="margin-top:var(--space-3);">
+                  <div class="gas-fee-row">
+                    <span class="gas-fee-label">Taxa do Arrendamento</span>
+                    <span id="lease-fee-display" class="gas-fee-value">0.005 WAVES</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Arrendamentos Ativos -->
+              <div>
+                <div class="feature-card-title">Arrendamentos Ativos</div>
+                <div id="active-leases-list" style="display:flex;flex-direction:column;gap:var(--space-2);">
+                  <div
+                    style="text-align:center;padding:var(--space-5);color:var(--text-muted);font-size:var(--text-sm);">
+                    Nenhum arrendamento ativo</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 8: Configurações -->
+        <div id="view-settings" class="wallet-view">
+          <div style="display:flex;flex-direction:column;gap:var(--space-4);overflow-y:auto;flex:1;">
+            <div class="view-header">
+              <h2 class="view-title" data-i18n="settings">Configurações</h2>
+            </div>
+
+            <!-- Seção: Info do Dispositivo / Status -->
+            <div class="glass-card"
+              style="padding:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3); border-left: 3px solid var(--color-success);">
+              <div style="display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                  <div style="font-size:var(--text-sm); font-weight:var(--fw-bold); color:var(--text-primary);">B2
+                    Wallet Core</div>
+                  <div style="color:var(--text-muted); font-size:var(--text-2xs);" data-i18n="openSource">v2.0.0 — Open
+                    Source</div>
+                </div>
+                <span
+                  style="font-size:var(--text-2xs); background:rgba(16,185,129,0.1); color:var(--text-success); border:1px solid rgba(16,185,129,0.2); border-radius:var(--radius-full); padding:2px 8px; font-weight:var(--fw-bold);"
+                  data-i18n="settingsStable">Estável</span>
+              </div>
+              <div
+                style="display:flex; flex-direction:column; gap:var(--space-2); padding-top:var(--space-2); border-top:1px solid var(--border-subtle); font-size: var(--text-2xs);">
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted);" data-i18n="securityModuleLabel">Módulo de Segurança</span>
+                  <span style="color:var(--text-success); font-weight:var(--fw-semibold);"
+                    data-i18n="securityModuleValue">🔒 Secure Enclave</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted);" data-i18n="custodyModeLabel">Modo de Custódia</span>
+                  <span style="color:var(--text-info); font-weight:var(--fw-semibold);"
+                    data-i18n="custodyModeValue">Auto-Custódia Total</span>
+                </div>
+                <div style="display:flex; justify-content:space-between;">
+                  <span style="color:var(--text-muted);" data-i18n="supportedNetworksLabel">Redes Suportadas</span>
+                  <span style="font-weight:var(--fw-semibold); color: var(--text-primary);"
+                    data-i18n="supportedNetworksValue">28 blockchains</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Seção: Preferências Gerais -->
+            <div class="glass-card"
+              style="padding:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3);">
+              <h3
+                style="font-size:var(--text-xs); font-weight:var(--fw-bold); text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin:0;"
+                data-i18n="settingsHeaderGeneral">Geral & Preferências</h3>
+
+              <div style="display:flex; flex-direction:column; gap:var(--space-2);">
+                <label class="form-label" style="font-size:var(--text-2xs); color:var(--text-secondary); margin:0;"
+                  data-i18n="priceSourceTitle">Provedor de Cotações</label>
+                <div id="price-source-custom-trigger" class="custom-select-trigger"
+                  style="padding: 10px; font-size: var(--text-xs);">
+                  <div class="custom-select-trigger-label">
+                    <span id="price-source-custom-icon">⚡</span>
+                    <span id="price-source-custom-value">Automático (Cascading Priority)</span>
+                  </div>
+                  <span class="custom-select-trigger-arrow">▼</span>
+                </div>
+                <select id="price-source-selector" style="display:none;">
+                  <option value="auto">Automático (Cascading Priority)</option>
+                  <option value="coingecko">CoinGecko API</option>
+                  <option value="yahoofinance">Yahoo Finance Crypto</option>
+                  <option value="dex">DEX Subgraphs (Uniswap V3)</option>
+                </select>
+              </div>
+
+              <button id="btn-more-options" class="btn btn-outline"
+                style="justify-content:space-between; font-size:var(--text-xs); padding:10px 14px;"
+                data-i18n="moreOptions">
+                <span>Mais opções</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="9 18 15 12 9 6" />
+                </svg>
+              </button>
+            </div>
+
+            <!-- Seção: Backup & Restauração -->
+            <div class="glass-card"
+              style="padding:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3);">
+              <h3
+                style="font-size:var(--text-xs); font-weight:var(--fw-bold); text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin:0;"
+                data-i18n="settingsHeaderData">Segurança dos Dados</h3>
+
+              <div style="display:flex; gap:10px; width:100%;">
+                <button id="btn-export-backup" class="btn btn-outline"
+                  style="flex:1; justify-content:center; font-size:var(--text-2xs); padding:10px;"
+                  data-i18n="exportConfig">Exportar Backup</button>
+                <button id="btn-trigger-import" class="btn btn-outline"
+                  style="flex:1; justify-content:center; font-size:var(--text-2xs); padding:10px;"
+                  data-i18n="importConfig">Importar Backup</button>
+                <input type="file" id="import-file-input" style="display:none;" accept=".json">
+              </div>
+            </div>
+
+            <!-- Seção: Alterar Senha -->
+            <div class="glass-card"
+              style="padding:var(--space-4); display:flex; flex-direction:column; gap:var(--space-3);">
+              <h3
+                style="font-size:var(--text-xs); font-weight:var(--fw-bold); text-transform:uppercase; letter-spacing:0.5px; color:var(--text-muted); margin:0;"
+                data-i18n="btnChangePassword">Alterar Senha</h3>
+
+              <div style="display:flex; flex-direction:column; gap:8px;">
+                <input type="password" id="change-pwd-old" class="form-input" data-i18n="oldPassword"
+                  placeholder="Senha Anterior" style="font-size:var(--text-xs); padding:8px 12px;">
+                <input type="password" id="change-pwd-new" class="form-input" data-i18n="newPassword"
+                  placeholder="Nova Senha Forte" style="font-size:var(--text-xs); padding:8px 12px;">
+              </div>
+              <button id="btn-change-pwd-submit" class="btn btn-secondary"
+                style="font-size:var(--text-xs); padding:10px;" data-i18n="btnChangePassword">Alterar Senha</button>
+            </div>
+
+            <!-- Banner Patrocinado: Serviços Profissionais de Desenvolvimento -->
+            <div class="glass-card services-better-card"
+              style="background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(245, 158, 11, 0.08) 100%); border: 1px solid rgba(124, 58, 237, 0.3); padding: var(--space-4); display: flex; flex-direction: column; gap: var(--space-2); position: relative; border-radius: var(--radius-md); box-shadow: 0 8px 24px rgba(124, 58, 237, 0.1);">
+              <div
+                style="position: absolute; top: -20px; right: -20px; width: 80px; height: 80px; background: var(--color-primary); filter: blur(35px); opacity: 0.3; pointer-events: none;">
+              </div>
+
+              <div style="display: flex; align-items: center; gap: var(--space-2); color: var(--color-secondary);">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"
+                  class="lucide lucide-code-xml">
+                  <path d="m18 16 4-4-4-4" />
+                  <path d="m6 8-4 4 4 4" />
+                  <path d="m14.5 4-5 16" />
+                </svg>
+                <span
+                  style="font-family: var(--font-tech); font-weight: 800; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--text-primary);"
+                  data-i18n="servicesTitle">Soluções Tecnológicas</span>
+              </div>
+
+              <div
+                style="font-size: var(--text-sm); font-weight: var(--fw-bold); color: var(--text-primary); margin-top: 2px;"
+                data-i18n="servicesSubtitle">Desenvolvimento de Sistemas & Blockchain</div>
+              <p style="font-size: var(--text-2xs); color: var(--text-secondary); line-height: 1.4; margin: 0;"
+                data-i18n="servicesDesc">
+                Criação de aplicativos Web3, smart contracts de alta performance, integrações financeiras e sistemas
+                corporativos personalizados pela equipe da Better2Better.
+              </p>
+
+              <button id="btn-services-contact" class="btn btn-secondary"
+                style="margin-top: var(--space-1); padding: 8px var(--space-3); font-size: 0.7rem; display: flex; align-items: center; justify-content: center; gap: 6px; background: linear-gradient(90deg, #7c3aed, #f59e0b); border: none; font-weight: var(--fw-bold); box-shadow: var(--shadow-glow-secondary); width: 100%;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path
+                    d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                </svg>
+                <span data-i18n="servicesBtn">Contratar Serviços via WhatsApp</span>
+              </button>
+            </div>
+
+            <button id="btn-lock-now" class="btn btn-danger"
+              style="margin-top:var(--space-2); margin-bottom:var(--space-4);" data-i18n="lockNow">Bloquear Carteira
+              Agora</button>
+          </div>
+        </div>
+
+      </div><!-- /wallet-content -->
+
+      <!-- Navegação Inferior -->
+      <div id="wallet-nav-bar" class="wallet-nav" style="display:none;">
+        <a href="#" class="nav-item active" data-target="view-dashboard">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+            <polyline points="9 22 9 12 15 12 15 22" />
+          </svg>
+          <span data-i18n="dashboard">Início</span>
+        </a>
+        <a href="#" class="nav-item" data-target="view-settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3" />
+            <path
+              d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+          <span data-i18n="settings">Configurações</span>
+        </a>
+      </div>
+
+      <!-- Rodapé -->
+      <div class="powered-by-footer" data-i18n="createdBy">
+        Powered by <a href="https://better2better.com.br" target="_blank"
+          class="b2b-highlight-link">better2better.com.br</a>
+      </div>
+
+    </div><!-- /wallet-shell -->
+
+    <!-- PAINEL DIREITO: Web3 Browser Simulator -->
+    <div class="playground-panel browser-simulator-shell glass-panel">
+      <!-- Barra do browser -->
+      <div class="browser-top-bar">
+        <div class="mac-dots">
+          <span class="dot red"></span>
+          <span class="dot yellow"></span>
+          <span class="dot green"></span>
+        </div>
+        <div class="browser-nav-arrows">
+          <button class="nav-arrow-btn" disabled>&larr;</button>
+          <button class="nav-arrow-btn" disabled>&rarr;</button>
+          <button class="nav-arrow-btn">&#8635;</button>
+        </div>
+        <div class="browser-address-bar">
+          <span class="lock-icon">🔒</span>
+          <span id="browser-current-url" class="address-url">https://app.uniswap.v4-b2.finance</span>
+          <span class="refresh-badge">SECURE (B2-BRIDGE)</span>
+        </div>
+        <div class="browser-network-badge">
+          <div class="network-dot active"></div>
+          <span id="browser-active-network-name">WAVES (SANDBOX)</span>
+        </div>
+      </div>
+
+      <!-- Abas dApp -->
+      <div class="browser-tabs">
+        <button class="browser-tab active" data-dapp="uniswap" data-url="https://app.uniswap.v4-b2.finance">
+          <span>🦄</span> Uniswap V4
+        </button>
+        <button class="browser-tab" data-dapp="waves-lease" data-url="https://lease-portal.waves.io">
+          <span>⛓️</span> LPoS Portal
+        </button>
+        <button class="browser-tab" data-dapp="nft-creator" data-url="https://mint-hub.b2wallet.art">
+          <span>🎨</span> NFT Studio
+        </button>
+      </div>
+
+      <!-- Viewport dApps -->
+      <div class="browser-viewport">
+
+        <!-- dApp 1: Uniswap Swap -->
+        <div id="dapp-uniswap" class="browser-tab-content active">
+          <div class="glass-card"
+            style="max-width:340px;margin:0 auto;padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);border-color:rgba(255,0,127,0.15);">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="uniswap-title">🦄 SWAP TOKENS</span>
+              <div id="uniswap-status-badge" class="playground-status">
+                <div id="uniswap-badge-dot" class="status-dot"></div>
+                <span id="uniswap-badge-text" style="font-size:var(--text-xs);"
+                  data-i18n="dappDisconnected">Desconectado</span>
+              </div>
+            </div>
+            <div class="uniswap-input-card">
+              <span
+                style="font-size:var(--text-xs);color:var(--text-muted);font-weight:var(--fw-semibold);text-transform:uppercase;">Você
+                Paga</span>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <input type="number" id="uniswap-from-amount" class="form-input"
+                  style="background:transparent;border:none;padding:0;font-family:var(--font-mono);font-size:var(--text-xl);font-weight:var(--fw-bold);width:60%;"
+                  value="1.0">
+                <span
+                  style="font-family:var(--font-mono);font-weight:var(--fw-bold);font-size:var(--text-sm);padding:4px 8px;background:var(--bg-hover);border-radius:var(--radius-sm);border:1px solid var(--border-light);">ETH</span>
+              </div>
+              <span id="uniswap-from-balance"
+                style="font-size:var(--text-xs);color:var(--text-muted);text-align:right;">Saldo: 0.0000</span>
+            </div>
+            <div style="display:flex;justify-content:center;margin:-4px 0;">
+              <div id="uniswap-reverse-btn"
+                style="width:26px;height:26px;border-radius:50%;background:var(--bg-card);border:1px solid var(--border-medium);display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ff007f;transition:transform 0.2s;">
+                &darr;</div>
+            </div>
+            <div class="uniswap-input-card">
+              <span
+                style="font-size:var(--text-xs);color:var(--text-muted);font-weight:var(--fw-semibold);text-transform:uppercase;">Você
+                Recebe</span>
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <input type="number" id="uniswap-to-amount" class="form-input"
+                  style="background:transparent;border:none;padding:0;font-family:var(--font-mono);font-size:var(--text-xl);font-weight:var(--fw-bold);width:60%;"
+                  value="3450.25" readonly>
+                <span
+                  style="font-family:var(--font-mono);font-weight:var(--fw-bold);font-size:var(--text-sm);padding:4px 8px;background:var(--bg-hover);border-radius:var(--radius-sm);border:1px solid var(--border-light);">USDC</span>
+              </div>
+              <span id="uniswap-to-balance"
+                style="font-size:var(--text-xs);color:var(--text-muted);text-align:right;">Saldo: 0.0000</span>
+            </div>
+            <div
+              style="background:var(--bg-input);padding:var(--space-2) var(--space-3);border-radius:var(--radius-sm);font-size:var(--text-xs);display:flex;justify-content:space-between;align-items:center;">
+              <span style="color:var(--text-muted);">Rota Estimada</span>
+              <span style="font-family:var(--font-mono);font-weight:var(--fw-bold);color:#ff007f;">ETH &rarr; WETH
+                &rarr; USDC</span>
+            </div>
+            <div style="display:flex;gap:var(--space-2);">
+              <button id="btn-uniswap-connect" class="btn btn-outline" style="flex:1;font-size:var(--text-xs);">Conectar
+                Carteira</button>
+              <button id="btn-uniswap-swap" class="uniswap-btn" style="flex:1.2;padding:10px;" disabled>Swap &amp;
+                Assinar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- dApp 2: Waves LPoS Lease Portal -->
+        <div id="dapp-waves-lease" class="browser-tab-content">
+          <div class="lease-dapp-container">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+              <div>
+                <h3
+                  style="font-size:var(--text-base);font-weight:var(--fw-bold);color:var(--color-primary);margin-bottom:2px;">
+                  ⛓️ Waves LPoS Leasing Portal</h3>
+                <p style="font-size:var(--text-xs);color:var(--text-muted);">Arrende suas WAVES para pools de
+                  validadores globais.</p>
+              </div>
+              <div id="lease-status-badge" class="playground-status">
+                <div id="lease-badge-dot" class="status-dot"></div>
+                <span id="lease-badge-text" style="font-size:var(--text-xs);">Desconectado</span>
+              </div>
+            </div>
+            <div class="lease-node-grid">
+              <div class="lease-node-card selected" data-node-addr="3P8B2BrasilValidatorNodeLease7H9o"
+                data-node-name="WavesBrasil Node">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span
+                    style="font-size:var(--text-sm);font-weight:var(--fw-semibold);">🇧🇷 WavesBrasil Node</span><span
+                    style="font-size:var(--text-xs);color:var(--text-success);font-weight:var(--fw-bold);">APY
+                    6.5%</span></div>
+                <span
+                  style="font-family:monospace;font-size:var(--text-2xs);color:var(--text-muted);word-break:break-all;">3P8B2BrasilValidatorNodeLease7H9o</span>
+              </div>
+              <div class="lease-node-card" data-node-addr="3P5KSafeB2WalletValidatorPool2A1s"
+                data-node-name="B2 Safe Pool">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span
+                    style="font-size:var(--text-sm);font-weight:var(--fw-semibold);">🛡️ B2 Safe Pool</span><span
+                    style="font-size:var(--text-xs);color:var(--text-success);font-weight:var(--fw-bold);">APY
+                    7.2%</span></div>
+                <span
+                  style="font-family:monospace;font-size:var(--text-2xs);color:var(--text-muted);word-break:break-all;">3P5KSafeB2WalletValidatorPool2A1s</span>
+              </div>
+              <div class="lease-node-card" data-node-addr="3PBetter2BetterHighPerformance9Xy"
+                data-node-name="B2B Core Node">
+                <div style="display:flex;justify-content:space-between;align-items:center;"><span
+                    style="font-size:var(--text-sm);font-weight:var(--fw-semibold);">🚀 B2B Core Node</span><span
+                    style="font-size:var(--text-xs);color:var(--text-success);font-weight:var(--fw-bold);">APY
+                    8.0%</span></div>
+                <span
+                  style="font-family:monospace;font-size:var(--text-2xs);color:var(--text-muted);word-break:break-all;">3PBetter2BetterHighPerformance9Xy</span>
+              </div>
+            </div>
+            <div
+              style="display:flex;gap:var(--space-2);align-items:flex-end;background:var(--bg-card);padding:var(--space-3);border-radius:var(--radius-md);border:1px solid var(--border-light);">
+              <div class="form-group" style="margin:0;flex:1;">
+                <label class="form-label">Montante WAVES</label>
+                <input type="number" id="dapp-lease-amount" class="form-input" value="5.0">
+              </div>
+              <button id="btn-dapp-lease" class="btn btn-primary" style="flex-shrink:0;" disabled>Arrendar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- dApp 3: NFT Mint Studio -->
+        <div id="dapp-nft-creator" class="browser-tab-content">
+          <div class="nft-sim-grid">
+            <div class="nft-canvas-preview">
+              <div
+                style="width:110px;height:100px;border-radius:var(--radius-md);background:linear-gradient(135deg,#a855f7,#ec4899);display:flex;justify-content:center;align-items:center;box-shadow:0 4px 16px rgba(168,85,247,0.4);"
+                id="nft-dapp-preview-box">
+                <span
+                  style="font-family:var(--font-mono);font-weight:var(--fw-black);font-size:var(--text-base);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.3);"
+                  id="nft-dapp-preview-id">NFT #00</span>
+              </div>
+              <span
+                style="font-size:var(--text-2xs);font-weight:var(--fw-bold);color:var(--text-muted);letter-spacing:0.1em;text-transform:uppercase;">MINT
+                PREVIEW</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                <h3 style="font-size:var(--text-base);font-weight:var(--fw-bold);color:var(--color-secondary);">🎨 NFT
+                  Mint Studio</h3>
+                <div id="nft-status-badge" class="playground-status">
+                  <div id="nft-badge-dot" class="status-dot"></div>
+                  <span id="nft-badge-text" style="font-size:var(--text-xs);">Desconectado</span>
+                </div>
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Nome do NFT</label>
+                <input type="text" id="nft-dapp-name" class="form-input" value="Cyber Shield Tech">
+              </div>
+              <div class="form-group" style="margin:0;">
+                <label class="form-label">Gradiente</label>
+                <select id="nft-dapp-gradient" class="form-input"
+                  style="background:var(--bg-input);color:var(--text-primary);border:1px solid var(--border-light);cursor:pointer;">
+                  <option value="linear-gradient(135deg,#a855f7,#ec4899)">Sunset Cyberpunk</option>
+                  <option value="linear-gradient(135deg,#10b981,#06b6d4)">Emerald Grid</option>
+                  <option value="linear-gradient(135deg,#f59e0b,#ef4444)">Gold Melt</option>
+                  <option value="linear-gradient(135deg,#3b82f6,#1d4ed8)">Deep Ocean</option>
+                </select>
+              </div>
+              <div style="display:flex;gap:var(--space-2);">
+                <button id="btn-nft-connect" class="btn btn-outline"
+                  style="flex:1;font-size:var(--text-xs);">Conectar</button>
+                <button id="btn-nft-mint" class="btn btn-secondary" style="flex:1;font-size:var(--text-xs);"
+                  disabled>Cunhar NFT</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div><!-- /browser-viewport -->
+
+      <!-- Terminal Console -->
+      <div class="terminal-container">
+        <div class="terminal-header">
+          <div style="display:flex;align-items:center;gap:var(--space-2);">
+            <span
+              style="font-family:var(--font-mono);font-size:var(--text-xs);color:var(--color-secondary);">&gt;_</span>
+            <span class="terminal-title">CONSOLE DO DESENVOLVEDOR (B2-BRIDGE API)</span>
+          </div>
+          <div style="display:flex;gap:var(--space-2);">
+            <button id="btn-copy-all-console" class="terminal-clear-btn"
+              style="border-color:var(--border-light);color:var(--text-muted);">COPIAR TUDO</button>
+            <button id="btn-clear-console" class="terminal-clear-btn">LIMPAR</button>
+          </div>
+        </div>
+        <div id="playground-console" class="console-log">
+          <div class="console-entry">
+            <span>[Bridge System] Inicializando Web3 Browser Controller...</span>
+            <button class="console-entry-copy-btn">COPIAR</button>
+          </div>
+          <div class="console-entry">
+            <span>[Bridge System] Prontidão total da ponte window.b2wallet detectada!</span>
+            <button class="console-entry-copy-btn">COPIAR</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /playground-panel -->
+
+  </div><!-- /app-container -->
+
+  <!-- ================================================================
+       MODAIS DE DETALHES (SISTEMA UNIFICADO DE ALTA FIDELIDADE)
+       ================================================================ -->
+
+  <!-- MODAL: Detalhes da Transação -->
+  <div id="modal-tx-detail" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:440px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="txDetailTitle">Detalhes da Transação</h3>
+        <button id="btn-close-tx-detail" class="b2-modal-close">&times;</button>
+      </div>
+      <div id="modal-tx-detail-body" style="display:flex;flex-direction:column;gap:var(--space-3);">
+        Carregando...
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Detalhes do NFT -->
+  <div id="modal-nft-detail" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:440px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="nftDetailTitle">Detalhes do NFT</h3>
+        <button id="btn-close-nft-detail" class="b2-modal-close">&times;</button>
+      </div>
+      <div id="modal-nft-detail-body" style="display:flex;flex-direction:column;gap:var(--space-3);">
+        Carregando...
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Detalhes do Token -->
+  <div id="modal-token-detail" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:440px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" data-i18n="tokenDetailTitle">Detalhes do Token</h3>
+        <button id="btn-close-token-detail" class="b2-modal-close">&times;</button>
+      </div>
+      <div id="modal-token-detail-body" style="display:flex;flex-direction:column;gap:var(--space-3);">
+        Carregando...
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Stellar Claimable Balances -->
+  <div id="modal-stellar-claimables" class="b2-modal modal-centered">
+    <div class="b2-modal-content" style="max-width:460px;">
+      <div class="b2-modal-header">
+        <h3 class="b2-modal-title" style="display:flex;align-items:center;gap:8px;"><span
+            style="font-size:1.2rem;">🎁</span> Saldos Reclamáveis (Stellar)</h3>
+        <button id="btn-close-stellar-claimables" class="b2-modal-close">&times;</button>
+      </div>
+      <div
+        style="font-size:0.75rem;color:var(--text-muted);margin-bottom:12px;font-family:var(--font-body);line-height:1.4;">
+        Abaixo estão listados os saldos pendentes enviados a você por terceiros ou emissores. Você pode reclamá-los para
+        sua conta instantaneamente.
+      </div>
+      <div id="stellar-claimables-list"
+        style="display:flex;flex-direction:column;gap:var(--space-3);max-height:300px;overflow-y:auto;padding-right:4px;">
+        <div style="text-align:center;padding:16px;color:var(--text-muted);">Carregando...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts Core da Carteira -->
+  <script src="src/js/vendor/ethers.umd.min.js"></script>
+  <script src="src/js/vendor/solanaWeb3.min.js"></script>
+  <script src="src/js/vendor/solana-derivation.umd.js"></script>
+  <script src="src/js/vendor/noble-ed25519.js"></script>
+  <script src="src/js/vendor/neon.js"></script>
+  <script src="src/js/vendor/polkadot-crypto.umd.js"></script>
+  <script src="src/js/crypto/platform-security.js"></script>
+  <script src="src/js/crypto/registry.js"></script>
+  <script src="src/js/crypto/price-oracle.js"></script>
+  <script src="src/js/crypto/evm-broadcaster.js"></script>
+  <script src="src/js/crypto/network-registry.js"></script>
+  <script src="src/js/crypto/ethereum-engine.js"></script>
+  <script src="src/js/crypto/solana-broadcaster.js"></script>
+  <script src="src/js/crypto/key-derivation.js"></script>
+  <script src="src/js/crypto/utxo-engine.js"></script>
+  <script src="src/js/crypto/neo-engine.js"></script>
+  <script src="src/js/crypto/filecoin-engine.js"></script>
+  <script src="src/js/crypto/waves-broadcaster.js"></script>
+  <script src="src/js/crypto/icp-engine.js"></script>
+  <script src="src/js/crypto/polkadot-engine.js"></script>
+  <script src="src/js/crypto/monero-engine.js"></script>
+  <script src="src/js/crypto/zcash-broadcaster.js"></script>
+  <script src="src/js/crypto/dash-broadcaster.js"></script>
+  <script src="src/js/crypto/tron-engine.js"></script>
+  <script src="src/js/vendor/stellar-sdk.min.js"></script>
+  <script src="src/js/crypto/stellar-engine.js"></script>
+  <script src="src/js/crypto/cardano-engine.js"></script>
+  <script src="src/js/providers/cardano-provider.js"></script>
+  <script src="src/js/providers/cardano-asset-provider.js"></script>
+  <script src="src/js/providers/cardano-nft-provider.js"></script>
+  <script src="src/js/providers/cardano-staking-provider.js"></script>
+  <script src="src/js/providers/cardano-governance-provider.js"></script>
+  <script src="src/js/providers/cardano-history-provider.js"></script>
+  <script src="src/js/providers/cardano-metadata-provider.js"></script>
+  <script src="src/js/providers/rpc-provider.js"></script>
+  <script src="src/js/providers/token-provider.js"></script>
+  <script src="src/js/providers/nft-provider.js"></script>
+  <script src="src/js/providers/history-provider.js"></script>
+  <script src="src/js/i18n/translations.js"></script>
+  <script src="src/js/sdk/b2-wallet-sdk.js"></script>
+  <script src="src/js/ui/renderer.js"></script>
+  <script src="src/js/app.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,481 @@
+/*
+ * B2 Wallet - Sistema de Design Global v2.0
+ * Tech Lead: Diego Oris (Better2Better)
+ * Design: Glassmorphism Premium, OLED-Ready, Mobile-First
+ */
+
+/* =============================================
+   IMPORTAÇÃO DE FONTES PREMIUM
+   - Inter: corpo de texto, UI geral (máxima legibilidade)
+   - Orbitron: valores monetários, endereços, dados técnicos
+   ============================================= */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Orbitron:wght@400;600;700;800;900&display=swap');
+
+/* =============================================
+   TOKENS DO DESIGN SYSTEM
+   ============================================= */
+:root {
+  /* ---- TIPOGRAFIA ---- */
+  --font-ui: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Orbitron', 'Courier New', monospace;
+
+  /* Escala tipográfica padronizada — compacta e premium */
+  --text-2xs: 0.58rem;    /* 9.28px — metadados, labels técnicas */
+  --text-xs:  0.65rem;    /* 10.4px  — labels de campo, tooltips */
+  --text-sm:  0.78rem;    /* 12.48px  — texto secundário, descrições */
+  --text-base: 0.85rem;   /* 13.6px  — corpo de texto principal */
+  --text-lg:  0.95rem;    /* 15.2px  — subtítulos, valores importantes */
+  --text-xl:  1.08rem;    /* 17.28px   — títulos de tela */
+  --text-2xl: 1.25rem;    /* 20px   — saldo principal */
+  --text-3xl: 1.6rem;     /* 25.6px  — saldo em destaque máximo */
+
+  /* Pesos tipográficos */
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-semibold: 600;
+  --fw-bold: 700;
+  --fw-extrabold: 800;
+  --fw-black: 900;
+
+  /* Line heights */
+  --lh-tight: 1.2;
+  --lh-normal: 1.5;
+  --lh-relaxed: 1.6;
+
+  /* ---- ESPAÇAMENTO (escala compactada) ---- */
+  --space-1: 0.2rem;    /* 3.2px */
+  --space-2: 0.4rem;    /* 6.4px */
+  --space-3: 0.65rem;   /* 10.4px */
+  --space-4: 0.85rem;   /* 13.6px */
+  --space-5: 1.1rem;    /* 17.6px */
+  --space-6: 1.3rem;    /* 20.8px */
+  --space-8: 1.75rem;   /* 28px */
+  --space-10: 2.2rem;   /* 35.2px */
+
+  /* ---- BORDAS ---- */
+  --radius-xs: 4px;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-full: 9999px;
+
+  /* ---- TRANSIÇÕES ---- */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-fast: 120ms var(--ease-in-out);
+  --transition-normal: 220ms var(--ease-out);
+  --transition-slow: 380ms var(--ease-out);
+
+  /* ---- SOMBRAS ---- */
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.12);
+  --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.18);
+  --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.28);
+  --shadow-xl: 0 32px 64px rgba(0, 0, 0, 0.36);
+}
+
+/* =============================================
+   TOKENS DE COR — TEMA ESCURO (PADRÃO OLED)
+   ============================================= */
+[data-theme="dark"] {
+  /* Backgrounds */
+  --bg-main:    #060608;
+  --bg-popup-main: #080a10;
+  --bg-popup-panel: #0a0b12;
+  --bg-panel:   rgba(12, 13, 18, 0.92);
+  --bg-card:    rgba(18, 20, 28, 0.80);
+  --bg-card-hover: rgba(24, 26, 36, 0.90);
+  --bg-input:   rgba(8, 9, 14, 0.90);
+  --bg-hover:   rgba(255, 255, 255, 0.04);
+  --bg-active:  rgba(255, 255, 255, 0.08);
+  --bg-gradient: radial-gradient(ellipse at 50% -10%, #1a1030 0%, #060608 65%);
+
+  /* Marca */
+  --color-primary:       #f59e0b;
+  --color-primary-dim:   rgba(245, 158, 11, 0.15);
+  --color-primary-hover: #d97706;
+  --color-secondary:     #7c3aed;
+  --color-secondary-dim: rgba(124, 58, 237, 0.15);
+  --color-secondary-hover: #6d28d9;
+  --color-accent:        #06b6d4;
+
+  /* Bordas */
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-light:  rgba(255, 255, 255, 0.09);
+  --border-medium: rgba(255, 255, 255, 0.16);
+  --border-strong: rgba(255, 255, 255, 0.28);
+
+  /* Texto */
+  --text-primary:   #f1f5f9;
+  --text-secondary: #94a3b8;
+  --text-muted:     #5a6680;
+  --text-disabled:  #374151;
+  --text-success:   #10b981;
+  --text-warning:   #f59e0b;
+  --text-danger:    #ef4444;
+  --text-info:      #38bdf8;
+
+  /* Glass */
+  --glass-blur: blur(20px);
+  --glass-border: rgba(255, 255, 255, 0.08);
+
+  /* Glows de blockchain */
+  --shadow-glow-primary:   0 0 20px rgba(245, 158, 11, 0.3);
+  --shadow-glow-secondary: 0 0 20px rgba(124, 58, 237, 0.3);
+  --shadow-glow-accent:    0 0 20px rgba(6, 182, 212, 0.3);
+}
+
+/* =============================================
+   TOKENS DE COR — TEMA CLARO (PREMIUM LIGHT)
+   ============================================= */
+[data-theme="light"] {
+  --bg-main:    #f0f2f7;
+  --bg-popup-main: #f0f2f7;
+  --bg-popup-panel: #ffffff;
+  --bg-panel:   rgba(255, 255, 255, 0.88);
+  --bg-card:    rgba(255, 255, 255, 0.80);
+  --bg-card-hover: rgba(248, 250, 252, 0.95);
+  --bg-input:   rgba(241, 245, 249, 0.95);
+  --bg-hover:   rgba(15, 23, 42, 0.04);
+  --bg-active:  rgba(15, 23, 42, 0.08);
+  --bg-gradient: radial-gradient(ellipse at 50% -10%, #e9dff8 0%, #f0f2f7 65%);
+
+  --color-primary:       #d97706;
+  --color-primary-dim:   rgba(217, 119, 6, 0.12);
+  --color-primary-hover: #b45309;
+  --color-secondary:     #7c3aed;
+  --color-secondary-dim: rgba(124, 58, 237, 0.12);
+  --color-secondary-hover: #6d28d9;
+  --color-accent:        #0284c7;
+
+  --border-subtle: rgba(15, 23, 42, 0.04);
+  --border-light:  rgba(15, 23, 42, 0.09);
+  --border-medium: rgba(15, 23, 42, 0.16);
+  --border-strong: rgba(15, 23, 42, 0.28);
+
+  --text-primary:   #0f172a;
+  --text-secondary: #475569;
+  --text-muted:     #8b9ab0;
+  --text-disabled:  #c1cbd8;
+  --text-success:   #059669;
+  --text-warning:   #d97706;
+  --text-danger:    #dc2626;
+  --text-info:      #0284c7;
+
+  --glass-blur: blur(16px);
+  --glass-border: rgba(15, 23, 42, 0.09);
+
+  --shadow-glow-primary:   0 0 16px rgba(217, 119, 6, 0.2);
+  --shadow-glow-secondary: 0 0 16px rgba(124, 58, 237, 0.2);
+  --shadow-glow-accent:    0 0 16px rgba(2, 132, 199, 0.2);
+}
+
+/* =============================================
+   RESET E REGRAS BASE
+   ============================================= */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px; /* Base reduzida para layout compacto de carteira */
+  -webkit-text-size-adjust: 100%;
+}
+
+/* Para extensão popup, fonte ainda menor */
+.is-extension-popup html,
+.is-extension-popup body { font-size: 13px; }
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--text-base); /* 14px */
+  font-weight: var(--fw-regular);
+  line-height: var(--lh-normal);
+  background: var(--bg-main);
+  background-image: var(--bg-gradient);
+  background-attachment: fixed;
+  color: var(--text-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color var(--transition-normal), color var(--transition-normal);
+  user-select: none;
+}
+
+/* Seleção permitida em campos específicos */
+.selectable,
+input,
+textarea,
+[data-selectable] {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+/* =============================================
+   SCROLLBAR PERSONALIZADA
+   ============================================= */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--border-medium);
+  border-radius: var(--radius-full);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-secondary); }
+
+/* Dashboard scrollbar slightly larger for better UX */
+#view-dashboard::-webkit-scrollbar { width: 8px; }
+#view-dashboard::-webkit-scrollbar-track { background: transparent; }
+#view-dashboard::-webkit-scrollbar-thumb { background: rgba(99, 102, 241, 0.14); border-radius: var(--radius-full); }
+#view-dashboard::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.28); }
+
+/* =============================================
+   UTILITÁRIOS DE GLASS
+   ============================================= */
+.glass-panel {
+  background: var(--bg-panel);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+  border-radius: var(--radius-xl);
+  transition: border-color var(--transition-normal), box-shadow var(--transition-normal);
+}
+
+.glass-card {
+  background: var(--bg-card);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-light);
+  box-shadow: var(--shadow-sm);
+  border-radius: var(--radius-md);
+  transition: transform var(--transition-fast), background var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.glass-card:hover {
+  background: var(--bg-card-hover);
+  box-shadow: var(--shadow-md);
+  border-color: var(--border-medium);
+}
+
+/* =============================================
+   ANIMAÇÕES GLOBAIS
+   ============================================= */
+
+/* Pulse lento para ícones e indicadores de status */
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.97); }
+}
+
+/* Shimmer de carregamento */
+@keyframes shimmer {
+  0% { background-position: -400% 0; }
+  100% { background-position: 400% 0; }
+}
+.shimmer-loading {
+  background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-hover) 50%, var(--bg-card) 75%);
+  background-size: 400% 100%;
+  animation: shimmer 2s infinite;
+}
+
+/* Entrada de view (fade + slide up suave) */
+@keyframes view-enter {
+  from { opacity: 0; transform: translateY(10px) scale(0.99); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.animate-view { animation: view-enter 380ms var(--ease-out) both; }
+
+/* Fade simples */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Slide up (modais) */
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+/* =============================================
+   GLOWS DE BLOCKCHAIN (animados)
+   ============================================= */
+@keyframes gold-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(245, 158, 11, 0.15), var(--shadow-lg); }
+  50%       { box-shadow: 0 0 24px rgba(245, 158, 11, 0.4), var(--shadow-lg); }
+}
+@keyframes purple-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(124, 58, 237, 0.15), var(--shadow-lg); }
+  50%       { box-shadow: 0 0 24px rgba(124, 58, 237, 0.4), var(--shadow-lg); }
+}
+@keyframes blue-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(59, 130, 246, 0.15), var(--shadow-lg); }
+  50%       { box-shadow: 0 0 24px rgba(59, 130, 246, 0.4), var(--shadow-lg); }
+}
+@keyframes green-glow {
+  0%, 100% { box-shadow: 0 0 8px rgba(16, 185, 129, 0.15), var(--shadow-lg); }
+  50%       { box-shadow: 0 0 24px rgba(16, 185, 129, 0.4), var(--shadow-lg); }
+}
+
+.glow-gold   { animation: gold-glow 3.5s infinite ease-in-out; }
+.glow-purple { animation: purple-glow 3.5s infinite ease-in-out; }
+.glow-blue   { animation: blue-glow 3.5s infinite ease-in-out; }
+.glow-green  { animation: green-glow 3.5s infinite ease-in-out; }
+
+/* =============================================
+   ANTI-SCREENSHOT OVERLAY
+   ============================================= */
+.anti-screenshot-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6, 6, 8, 0.97);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  z-index: 99999;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--text-primary);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-normal);
+}
+body.window-blurred .anti-screenshot-overlay {
+  opacity: 1;
+  pointer-events: auto;
+}
+.anti-screenshot-logo {
+  font-family: var(--font-mono);
+  font-size: var(--text-3xl);
+  font-weight: var(--fw-black);
+  letter-spacing: 4px;
+  color: var(--color-primary);
+  text-shadow: var(--shadow-glow-primary);
+}
+.anti-screenshot-desc {
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* =============================================
+   POPUP DA EXTENSÃO — LAYOUT RESTRITO
+   ============================================= */
+.is-extension-popup,
+.is-extension-popup body {
+  width: 360px !important;
+  height: 600px !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  background: var(--bg-popup-main) !important; /* Força fundo sólido do tema ativo para evitar bugs de transparência/composição no Chrome extension popup */
+}
+
+/* Desativa backdrop-filter e -webkit-backdrop-filter globalmente no popup para prevenir bugs de aceleração de GPU e telas pretas no Chrome */
+.is-extension-popup *,
+.is-extension-popup ::before,
+.is-extension-popup ::after {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+.is-extension-popup .app-container {
+  padding: 0 !important;
+  width: 360px !important;
+  height: 600px !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  flex-direction: column !important;
+  background: var(--bg-popup-main) !important; /* Garante fundo sólido do tema */
+}
+.is-extension-popup .playground-panel { display: none !important; }
+.is-extension-popup .wallet-shell {
+  max-width: 100% !important;
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  background: var(--bg-popup-panel) !important; /* Força fundo sólido do tema no popup */
+  animation: none !important; /* Evita animação bg-shift que pode engasgar renderização GPU */
+}
+
+.is-extension-popup .wallet-content {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow: hidden !important; /* Restored hidden to constrain height and trigger .wallet-view internal scrolling */
+  padding: var(--space-4) !important; /* Reduz padding levemente para se adequar ao viewport do popup */
+  background: var(--bg-popup-panel) !important; /* Garante fundo sólido do tema */
+}
+
+.is-extension-popup .wallet-view {
+  display: none !important; /* Garante ocultação com !important para sobrepor qualquer herança */
+  flex-direction: column !important;
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important; /* Barra de rolagem segura para evitar cortes ou elementos invisíveis */
+}
+
+/* FIX CRÍTICO: cancela animate-view no popup antes que o keyframe opacity:0 seja aplicado */
+.is-extension-popup .wallet-view.animate-view,
+.is-extension-popup .wallet-view.active.animate-view {
+  animation: none !important;
+  opacity: 1 !important;
+  transform: none !important;
+  visibility: visible !important;
+}
+
+.is-extension-popup .wallet-view.active {
+  display: flex !important;
+  opacity: 1 !important;
+  transform: none !important;
+  animation: none !important;
+  visibility: visible !important;
+  background: transparent !important; /* Garante que background não mascara conteúdo */
+}
+
+/* Centralização vertical e horizontal ultra-robusta com suporte seguro a overflow e rolagem */
+.is-extension-popup #view-welcome.active,
+.is-extension-popup #view-locked.active {
+  justify-content: flex-start !important; /* Começa do topo se transbordar para permitir rolagem segura */
+  align-items: center !important;
+  display: flex !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+.is-extension-popup #view-welcome.active > div,
+.is-extension-popup #view-locked.active > div {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: auto 0 !important; /* Centraliza verticalmente se houver espaço; colapsa para 0 se transbordar */
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
+/* Otimizações de espaçamento para o layout do Popup */
+.is-extension-popup .wallet-view > div {
+  gap: var(--space-3) !important; /* Reduz gap de 16px para 12px para maximizar área visível */
+}
+
+.is-extension-popup .form-group {
+  margin-bottom: 0 !important; /* Remove margem dupla de formulários para economizar altura preciosa */
+}
+
+.is-extension-popup .pwd-requirements-panel,
+.is-extension-popup .pin-requirements-panel {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  padding: var(--space-2) var(--space-3) !important; /* Mais compacto no popup */
+}
+
+
