@@ -1,0 +1,205 @@
+/* =============================================
+   FORMULÁRIOS E INPUTS
+   ============================================= */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.form-group:last-child {
+  margin-bottom: 0;
+}
+
+.form-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+}
+
+.form-input-container {
+  position: relative;
+  width: 100%;
+}
+
+.form-input {
+  width: 100%;
+  height: 48px;
+  padding: 0 var(--space-4);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  font-weight: var(--fw-medium);
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background var(--transition-fast);
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-dim);
+  background: var(--bg-card);
+}
+
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+.form-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.form-input-container svg {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.form-input-container svg:hover {
+  color: var(--color-primary);
+}
+
+
+/* =============================================
+   SEED GRID (Mnemônico)
+   ============================================= */
+.seed-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin: var(--space-4) 0;
+}
+
+.seed-word-card {
+  background: var(--bg-input);
+  border: 1px solid var(--border-light);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.seed-word-index {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  color: var(--text-muted);
+  min-width: 14px;
+  text-align: right;
+}
+
+.seed-word-text {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-primary);
+}
+
+
+/* =============================================
+   CONFIRMAÇÃO DE SEED
+   ============================================= */
+#confirm-seed-inputs-container {
+  display: grid !important;
+  grid-template-columns: repeat(2, 1fr) !important;
+  gap: var(--space-4) !important;
+  margin-bottom: var(--space-4) !important;
+  flex-shrink: 0 !important;
+  width: 100% !important;
+}
+
+@media (max-width: 480px) {
+  #confirm-seed-inputs-container {
+    grid-template-columns: 1fr !important;
+    gap: var(--space-3) !important;
+    margin-bottom: var(--space-3) !important;
+  }
+}
+
+.is-extension-popup #confirm-seed-inputs-container {
+  grid-template-columns: 1fr !important;
+  gap: var(--space-2) !important;
+  margin-bottom: var(--space-2) !important;
+}
+
+#confirm-seed-inputs-container .form-group {
+  margin-bottom: 0 !important;
+  flex-shrink: 0 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: var(--space-1) !important;
+  text-align: left !important;
+}
+
+.confirm-word-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-3);
+  background: var(--bg-input);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-light);
+}
+
+.confirm-word-label {
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.confirm-word-input {
+  background: var(--bg-input) !important;
+  border: 1px solid var(--border-light) !important;
+  outline: none;
+  font-family: var(--font-ui) !important;
+  font-size: var(--text-sm) !important;
+  color: var(--text-primary) !important;
+  text-align: left !important;
+  padding: 0 var(--space-4) !important;
+  border-radius: var(--radius-md) !important;
+  height: 48px !important;
+  width: 100% !important;
+  user-select: text !important;
+  transition: all 0.2s;
+  flex-shrink: 0 !important;
+}
+
+.confirm-word-input:focus {
+  border-color: var(--color-primary) !important;
+  box-shadow: 0 0 0 3px var(--color-primary-dim) !important;
+  background: var(--bg-card) !important;
+}
+
+
+/* =============================================
+   VALIDAÇÃO DE ENTRADAS (ERROS INLINE)
+   ============================================= */
+.form-input.is-invalid,
+.confirm-word-input.is-invalid {
+  border-color: var(--text-danger, #ef4444) !important;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15) !important;
+}
+
+.input-error-msg {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: var(--text-xs, 12px);
+  font-weight: var(--fw-medium, 500);
+  color: var(--text-danger, #ef4444);
+  margin-top: 6px;
+  text-align: left;
+}

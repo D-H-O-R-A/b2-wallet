@@ -97,18 +97,18 @@ test('Suíte de Derivação - Formatação de Endereços Públicos (Address Enco
     assert.strictEqual(dashAddr.startsWith("X"), true, 'Dash deve começar com o prefixo X');
   });
 
-  await t.test('Deve derivar corretamente endereços para forks de Waves (AMZX, Celeronx, Turtle Network)', () => {
+  await t.test('Deve derivar corretamente endereços para forks de Waves (AMZX, PLO, Turtle Network)', () => {
     const wavesPriv = B2KeyDerivationEngine.derivePrivateKey(seed, 3600);
     const amzxPriv = B2KeyDerivationEngine.derivePrivateKey(seed, 3600); // Compartilha coin_type da família Waves
 
     const wavesAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "Waves");
     const amzxAddr = B2KeyDerivationEngine.deriveAddress(amzxPriv, "AMZX");
-    const celeronxAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "CELERONX");
+    const ploAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "PLO");
     const turtleAddr = B2KeyDerivationEngine.deriveAddress(amzxPriv, "Turtle");
 
     assert.strictEqual(wavesAddr.startsWith("3P"), true, 'Endereço Waves deve iniciar com prefixo 3P');
     assert.strictEqual(amzxAddr.startsWith("3E"), true, 'Endereço AMZX (fork Waves) deve iniciar com prefixo 3E');
-    assert.strictEqual(celeronxAddr.length, 35, 'Endereço Celeronx deve ter 35 caracteres');
+    assert.strictEqual(ploAddr.length, 35, 'Endereço PLO deve ter 35 caracteres');
     assert.strictEqual(turtleAddr.startsWith("3J"), true, 'Endereço Turtle Network deve iniciar com prefixo 3J');
   });
 
@@ -134,18 +134,18 @@ test('Suíte de Derivação - Formatação de Endereços Públicos (Address Enco
     const wavesPriv = B2KeyDerivationEngine.derivePrivateKey(seed, 3600);
     const wavesAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "Waves");
     const amzxAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "AMZX");
-    const celeronxAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "CELERONX");
+    const ploAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "PLO");
     const turtleAddr = B2KeyDerivationEngine.deriveAddress(wavesPriv, "Turtle");
 
     assert.strictEqual(B2KeyDerivationEngine.validateAddress(wavesAddr, "Waves"), true);
     assert.strictEqual(B2KeyDerivationEngine.validateAddress(amzxAddr, "AMZX"), true);
-    assert.strictEqual(B2KeyDerivationEngine.validateAddress(celeronxAddr, "CELERONX"), true);
+    assert.strictEqual(B2KeyDerivationEngine.validateAddress(ploAddr, "PLO"), true);
     assert.strictEqual(B2KeyDerivationEngine.validateAddress(turtleAddr, "Turtle"), true);
 
     // Wrong chainId validation should fail
     assert.strictEqual(B2KeyDerivationEngine.validateAddress(wavesAddr, "AMZX"), false);
     assert.strictEqual(B2KeyDerivationEngine.validateAddress(amzxAddr, "Waves"), false);
-    assert.strictEqual(B2KeyDerivationEngine.validateAddress(celeronxAddr, "AMZX"), false);
+    assert.strictEqual(B2KeyDerivationEngine.validateAddress(ploAddr, "AMZX"), false);
 
 
     // Solana

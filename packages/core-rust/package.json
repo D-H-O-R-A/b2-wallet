@@ -1,7 +1,7 @@
 {
   "name": "b2-wallet-core",
-  "version": "0.1.3",
-  "version_name": "0.1.3 beta",
+  "version": "0.1.5",
+  "version_name": "0.1.5 beta",
   "description": "Core Criptográfico de Auto-Custódia em Rust - B2 Wallet",
   "private": true,
   "main": "pkg/b2_wallet_core.js",

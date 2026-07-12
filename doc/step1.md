@@ -71,7 +71,7 @@ O Core da carteira é escrito em **Rust** para garantir velocidade, imunidade a 
 ```toml
 [package]
 name = "b2-wallet-core"
-version = "0.1.3"
+version = "0.1.5"
 edition = "2021"
 authors = ["Diego Oris <better2better.com.br>"]
 

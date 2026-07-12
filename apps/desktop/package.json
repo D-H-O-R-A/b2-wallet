@@ -1,7 +1,7 @@
 {
   "name": "b2-wallet-desktop",
-  "version": "0.1.3",
-  "version_name": "0.1.3 beta",
+  "version": "0.1.5",
+  "version_name": "0.1.5 beta",
   "description": "Aplicativo Desktop B2 Wallet (macOS, Windows, Linux) - Tauri v2",
   "private": true,
   "scripts": {

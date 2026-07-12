@@ -5,23 +5,18 @@
  * - Deterministic BIP-44 key derivation path m/44'/128'/0'/0/index (Coin Type 128).
  * - Genuine cryptographic Spend and View key derivation reduced modulo Ed25519 group order l.
  * - Point addition and scalar point multiplication using noble-ed25519 library.
- * - Custom Monero block-based Base58 encoder and decoder.
  * - Monero standard (starts with 4, prefix 0x12), subaddress (starts with 8, prefix 0x2a), and integrated address (starts with 4, prefix 0x13) validation and derivation.
  * - Real-time balance and transaction history fetching via CakeWallet / MyMonero Light Wallet API.
  * - Failover public node query (get_info, get_height).
- * - Encrypted localStorage stores (AES-GCM) for cache and transaction history.
+ *
+ * Delegates Base58 codecs and endian helpers to monero-base58.js,
+ * and AES-GCM cache persistence to monero-store.js.
  *
  * Developed by Better2Better — Tech Lead Diego Oris.
  */
 
 ;(function(global) {
   'use strict';
-
-  const ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz";
-  const ENCODED_BLOCK_SIZES = [0, 2, 3, 5, 6, 7, 9, 10, 11];
-  const DECODED_BLOCK_SIZES = {
-    2: 1, 3: 2, 5: 3, 6: 4, 7: 5, 9: 6, 10: 7, 11: 8
-  };
 
   const l = 7237005577332262213973186563042994240857116359379907606001950938285454250989n;
 
@@ -33,6 +28,47 @@
   let ed25519 = global.noble && global.noble.ed25519 || 
                 (global.window && global.window.noble && global.window.noble.ed25519) ||
                 (typeof window !== 'undefined' && window.noble && window.noble.ed25519);
+
+  function getBase58Submodule() {
+    const b58 = global.B2MoneroBase58 || 
+                (global.window && global.window.B2MoneroBase58) || 
+                (typeof window !== 'undefined' && window.B2MoneroBase58);
+    if (!b58) {
+      throw new Error("B2MoneroBase58 submodule is not loaded");
+    }
+    return b58;
+  }
+
+  function getStoreSubmodule() {
+    const store = global.B2MoneroStore || 
+                  (global.window && global.window.B2MoneroStore) || 
+                  (typeof window !== 'undefined' && window.B2MoneroStore);
+    if (!store) {
+      throw new Error("B2MoneroStore submodule is not loaded");
+    }
+    return store;
+  }
+
+  // Delegated low-level and Base58 block helpers
+  function encodeBase58(bytes) { return getBase58Submodule().encodeBase58(bytes); }
+  function decodeBase58(str) { return getBase58Submodule().decodeBase58(str); }
+  function bytesToBigIntLE(bytes) { return getBase58Submodule().bytesToBigIntLE(bytes); }
+  function bigIntToBytesLE(num, length) { return getBase58Submodule().bigIntToBytesLE(num, length); }
+  function hexToBytes(hex) { return getBase58Submodule().hexToBytes(hex); }
+  function bytesToHex(bytes) { return getBase58Submodule().bytesToHex(bytes); }
+
+  // Delegated Encrypted Stores
+  function deriveStoreKey(privateViewKeyHex) { return getStoreSubmodule().deriveStoreKey(privateViewKeyHex); }
+  function encryptData(dataText, privateViewKeyHex) { return getStoreSubmodule().encryptData(dataText, privateViewKeyHex); }
+  function decryptData(encryptedHex, privateViewKeyHex) { return getStoreSubmodule().decryptData(encryptedHex, privateViewKeyHex); }
+  const MoneroCacheStore = {
+    save(address, pvk, d) { return getStoreSubmodule().MoneroCacheStore.save(address, pvk, d); },
+    load(address, pvk) { return getStoreSubmodule().MoneroCacheStore.load(address, pvk); }
+  };
+  const MoneroHistoryStore = {
+    save(address, pvk, txs) { return getStoreSubmodule().MoneroHistoryStore.save(address, pvk, txs); },
+    load(address, pvk) { return getStoreSubmodule().MoneroHistoryStore.load(address, pvk); }
+  };
 
   function ensureEd25519() {
     if (!ed25519 && typeof require !== 'undefined') {
@@ -75,105 +111,14 @@
                 (typeof window !== 'undefined' && window.fetch) || 
                 (typeof require !== 'undefined' && require('node-fetch'));
 
-  // Utility helpers
-  function bytesToBigIntLE(bytes) {
-    let result = 0n;
-    for (let i = 0; i < bytes.length; i++) {
-      result += BigInt(bytes[i]) << (8n * BigInt(i));
-    }
-    return result;
-  }
-
-  function bigIntToBytesLE(num, length = 32) {
-    const bytes = new Uint8Array(length);
-    for (let i = 0; i < length; i++) {
-      bytes[i] = Number((num >> (8n * BigInt(i))) & 0xFFn);
-    }
-    return bytes;
-  }
-
-  function hexToBytes(hex) {
-    if (!hex) return new Uint8Array(0);
-    const clean = hex.startsWith('0x') ? hex.slice(2) : hex;
-    return new Uint8Array(clean.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-  }
-
-  function bytesToHex(bytes) {
-    return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-  }
-
-  // Monero Block-Based Base58 Helpers
-  function encodeBlock(bytes, size) {
-    let num = 0n;
-    for (let i = 0; i < size; i++) {
-      num = (num << 8n) + BigInt(bytes[i]);
-    }
-    let encodedSize = ENCODED_BLOCK_SIZES[size];
-    let result = "";
-    for (let i = 0; i < encodedSize; i++) {
-      const rem = num % 58n;
-      result = ALPHABET[Number(rem)] + result;
-      num = num / 58n;
-    }
-    return result;
-  }
-
-  function decodeBlock(str) {
-    const size = DECODED_BLOCK_SIZES[str.length];
-    if (size === undefined) {
-      throw new Error("Invalid character block length: " + str.length);
-    }
-    let num = 0n;
-    for (let i = 0; i < str.length; i++) {
-      const charIndex = ALPHABET.indexOf(str[i]);
-      if (charIndex === -1) {
-        throw new Error("Invalid Base58 character: " + str[i]);
-      }
-      num = num * 58n + BigInt(charIndex);
-    }
-    const bytes = new Uint8Array(size);
-    for (let i = size - 1; i >= 0; i--) {
-      bytes[i] = Number(num & 0xFFn);
-      num = num >> 8n;
-    }
-    return bytes;
-  }
-
   const B2MoneroEngine = {
-    // -------------------------------------------------------------------------
-    // BASE58 ENCODING & DECODING
-    // -------------------------------------------------------------------------
-    encodeBase58(bytes) {
-      let result = "";
-      const fullBlocks = Math.floor(bytes.length / 8);
-      for (let i = 0; i < fullBlocks; i++) {
-        const block = bytes.subarray(i * 8, i * 8 + 8);
-        result += encodeBlock(block, 8);
-      }
-      const remainder = bytes.length % 8;
-      if (remainder > 0) {
-        const block = bytes.subarray(fullBlocks * 8);
-        result += encodeBlock(block, remainder);
-      }
-      return result;
-    },
-
-    decodeBase58(str) {
-      let bytes = [];
-      const fullBlocks = Math.floor(str.length / 11);
-      for (let i = 0; i < fullBlocks; i++) {
-        const blockStr = str.substring(i * 11, i * 11 + 11);
-        const blockBytes = decodeBlock(blockStr);
-        bytes.push(...blockBytes);
-      }
-      const remainder = str.length % 11;
-      if (remainder > 0) {
-        const blockStr = str.substring(fullBlocks * 11);
-        const blockBytes = decodeBlock(blockStr);
-        bytes.push(...blockBytes);
-      }
-      return new Uint8Array(bytes);
-    },
+    encodeBase58,
+    decodeBase58,
+    deriveStoreKey,
+    encryptData,
+    decryptData,
+    MoneroCacheStore,
+    MoneroHistoryStore,
 
     // -------------------------------------------------------------------------
     // KEY DERIVATION & ADDRESS GENERATION
@@ -397,59 +342,6 @@
     },
 
     // -------------------------------------------------------------------------
-    // ENCRYPTED DATA PERSISTENCE
-    // -------------------------------------------------------------------------
-    async deriveStoreKey(privateViewKeyHex) {
-      const viewKeyBytes = hexToBytes(privateViewKeyHex);
-      const crypto = global.window && global.window.crypto || global.crypto || globalThis.crypto;
-      return await crypto.subtle.importKey(
-        "raw",
-        viewKeyBytes,
-        { name: "AES-GCM" },
-        false,
-        ["encrypt", "decrypt"]
-      );
-    },
-
-    async encryptData(dataText, privateViewKeyHex) {
-      const key = await this.deriveStoreKey(privateViewKeyHex);
-      const crypto = global.window && global.window.crypto || global.crypto || globalThis.crypto;
-      const iv = crypto.getRandomValues(new Uint8Array(12));
-      const encoded = new TextEncoder().encode(dataText);
-      const ciphertext = await crypto.subtle.encrypt(
-        { name: "AES-GCM", iv: iv },
-        key,
-        encoded
-      );
-      
-      const ivHex = bytesToHex(iv);
-      const cipherHex = bytesToHex(new Uint8Array(ciphertext));
-      return ivHex + ":" + cipherHex;
-    },
-
-    async decryptData(encryptedHex, privateViewKeyHex) {
-      if (!encryptedHex) return null;
-      const parts = encryptedHex.split(":");
-      if (parts.length !== 2) return null;
-      const iv = hexToBytes(parts[0]);
-      const ciphertext = hexToBytes(parts[1]);
-      
-      const key = await this.deriveStoreKey(privateViewKeyHex);
-      try {
-        const crypto = global.window && global.window.crypto || global.crypto || globalThis.crypto;
-        const decrypted = await crypto.subtle.decrypt(
-          { name: "AES-GCM", iv: iv },
-          key,
-          ciphertext
-        );
-        return new TextDecoder().decode(decrypted);
-      } catch (e) {
-        console.error("Failed to decrypt Monero store:", e);
-        return null;
-      }
-    },
-
-    // -------------------------------------------------------------------------
     // PROVIDER & NETWORK QUERIES
     // -------------------------------------------------------------------------
     XMRProvider: {
@@ -490,7 +382,6 @@
 
       async getBalance(address, privateViewKeyHex) {
         try {
-          // Standard Lightwallet API endpoint (primary is MyMonero API)
           const lwsServers = [
             "https://api.mymonero.com",
             "https://lws.maayan.media"
@@ -514,12 +405,10 @@
                 const totalSent = BigInt(data.total_sent || "0");
                 const balanceAtomic = totalReceived - totalSent;
                 
-                // 1 XMR = 10^12 atomic units
                 const balance = Number(balanceAtomic) / 1e12;
                 const locked = Number(BigInt(data.locked_funds || "0")) / 1e12;
                 
-                // Cache locally
-                await B2MoneroEngine.MoneroCacheStore.save(address, privateViewKeyHex, {
+                await MoneroCacheStore.save(address, privateViewKeyHex, {
                   balance,
                   locked,
                   height: data.blockchain_height || 0
@@ -538,14 +427,12 @@
             }
           }
 
-          // Fallback to locally cached balance if available
-          const cached = await B2MoneroEngine.MoneroCacheStore.load(address, privateViewKeyHex);
+          const cached = await MoneroCacheStore.load(address, privateViewKeyHex);
           if (cached) {
             console.warn("[XMRProvider] Failed to fetch live balance, using cached state.", lastError);
             return cached;
           }
 
-          // Default return if offline and no cache
           return { balance: 0.0, locked: 0.0, height: 0 };
         } catch (err) {
           console.error("[XMRProvider] Error getting balance:", err);
@@ -588,7 +475,7 @@
                   };
                 });
                 
-                await B2MoneroEngine.MoneroHistoryStore.save(address, privateViewKeyHex, txs);
+                await MoneroHistoryStore.save(address, privateViewKeyHex, txs);
                 return txs;
               } else {
                 lastError = new Error(`HTTP ${response.status} from LWS server`);
@@ -598,8 +485,7 @@
             }
           }
 
-          // Load from cache
-          const cached = await B2MoneroEngine.MoneroHistoryStore.load(address, privateViewKeyHex);
+          const cached = await MoneroHistoryStore.load(address, privateViewKeyHex);
           if (cached) {
             console.warn("[XMRProvider] Failed to fetch live history, returning cached state.", lastError);
             return cached;
@@ -612,14 +498,10 @@
       },
 
       async estimateFee() {
-        // Monero fees are extremely low, usually around 0.00005 XMR.
         return 0.00005;
       },
 
       async sendTransaction(mnemonic, recipient, amount, options = {}) {
-        // Monero transaction construction is complex, requiring ring signatures and stealth address matching.
-        // On a browser extension side with 0 balance or offline, we perform dynamic parameter verification
-        // and validation.
         if (!B2MoneroEngine.validateAddress(recipient)) {
           throw new Error("Endereço de destino Monero inválido");
         }
@@ -631,8 +513,7 @@
         if (liveState.balance < amount + fee) {
           throw new Error("Saldo insuficiente para cobrir o valor e a taxa da transação");
         }
-
-        // Return a mock-free structural transaction representation ready to be broadcasted
+        
         return {
           hash: B2KeyDerivationEngine.keccak256(recipient + amount + Date.now().toString()),
           recipient,
@@ -641,57 +522,6 @@
           timestamp: Math.floor(Date.now() / 1000),
           broadcasted: true
         };
-      }
-    },
-
-    // -------------------------------------------------------------------------
-    // ENCRYPTED STORES
-    // -------------------------------------------------------------------------
-    MoneroCacheStore: {
-      async save(address, privateViewKeyHex, data) {
-        try {
-          const key = `xmr_cache_${address}`;
-          const encrypted = await B2MoneroEngine.encryptData(JSON.stringify(data), privateViewKeyHex);
-          localStorage.setItem(key, encrypted);
-        } catch (e) {
-          console.error("Failed to save Monero cache:", e);
-        }
-      },
-      async load(address, privateViewKeyHex) {
-        try {
-          const key = `xmr_cache_${address}`;
-          const encrypted = localStorage.getItem(key);
-          if (!encrypted) return null;
-          const decrypted = await B2MoneroEngine.decryptData(encrypted, privateViewKeyHex);
-          return decrypted ? JSON.parse(decrypted) : null;
-        } catch (e) {
-          console.error("Failed to load Monero cache:", e);
-          return null;
-        }
-      }
-    },
-
-    MoneroHistoryStore: {
-      async save(address, privateViewKeyHex, txs) {
-        try {
-          const key = `xmr_history_${address}`;
-          const encrypted = await B2MoneroEngine.encryptData(JSON.stringify(txs), privateViewKeyHex);
-          localStorage.setItem(key, encrypted);
-        } catch (e) {
-          console.error("Failed to save Monero history:", e);
-        }
-      },
-      async load(address, privateViewKeyHex) {
-        try {
-          const key = `xmr_history_${address}`;
-          const encrypted = localStorage.getItem(key);
-          if (!encrypted) return null;
-          const decrypted = await B2MoneroEngine.decryptData(encrypted, privateViewKeyHex);
-          return decrypted ? JSON.parse(decrypted) : null;
-        } catch (e) {
-          console.error("Failed to load Monero history:", e);
-          return null;
-        }
       }
     }
   };

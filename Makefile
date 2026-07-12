@@ -2,7 +2,7 @@
 # Developed by Better2Better under Tech Lead Diego Oris
 # Padrões: Engenharia de Sistemas Senior, Sem referências à IA, Limpo e Eficiente.
 
-.PHONY: all build dev clean test lint deploy-all deploy-extension sign-firefox deploy-sdk deploy-mobile-android deploy-mobile-ios deploy-desktop
+.PHONY: all build dev clean test lint deploy-all deploy-extension deploy-extension-crx sign-firefox deploy-sdk deploy-mobile-android deploy-mobile-ios deploy-desktop
 
 # Default task: test and build everything
 all: test build
@@ -16,6 +16,8 @@ clean:
 	rm -rf build/
 	rm -rf packages/core-rust/target/
 	rm -rf apps/desktop/src-tauri/target/
+	rm -rf apps/mobile/android/app/src/main/assets/public/
+	rm -rf apps/mobile/ios/App/App/public/
 
 # Run global tests (Rust and JS/Node suite)
 test:
@@ -54,6 +56,32 @@ deploy-extension:
 	@echo "   - Edge:     build/b2-wallet-edge.zip"
 	@echo "   - Safari:   build/b2-wallet-safari.zip"
 
+deploy-extension-crx:
+	@echo "🔑 Verificando chave privada de assinatura (key.pem)..."
+	@if [ ! -f key.pem ]; then \
+		echo "Gerando nova chave privada RSA de 2048 bits (key.pem)..."; \
+		openssl genrsa -out key.pem 2048; \
+	fi
+	@echo "📤 Extraindo chave pública no formato PEM para o painel da Chrome Web Store..."
+	@openssl rsa -in key.pem -pubout -outform PEM -out public.pem
+	@echo ""
+	@echo "========================================================================="
+	@echo "COPIE E COLE A CHAVE ABAIXO NO CAMPO 'CHAVE PÚBLICA DE UPLOADS VERIFICADOS':"
+	@echo "========================================================================="
+	@cat public.pem
+	@echo "========================================================================="
+	@echo ""
+	@echo "📦 Sincronizando arquivos da extensão..."
+	@node apps/extension/build-extensions.js
+	@mkdir -p build
+	@echo "✍️ Assinando e compilando pacote verificado (build/b2-wallet-chrome.crx)..."
+	@npx -y crx3 apps/extension/dist/chrome -p key.pem -o build/b2-wallet-chrome.crx
+	@cp build/b2-wallet-chrome.crx build/b2-wallet-extension.crx
+	@echo "✅ Extensão compilada e assinada com sucesso!"
+	@echo "   - Chave Privada (MANTENHA SEGURA E EM SEGREDO): key.pem"
+	@echo "   - Chave Pública (Para a Chrome Store): public.pem"
+	@echo "   - Arquivo Assinado (.crx): build/b2-wallet-chrome.crx"
+
 # Sign Firefox Extension for Self-Distribution
 sign-firefox:
 	@if [ -z "$(AMO_API_KEY)" ] || [ -z "$(AMO_API_SECRET)" ]; then \
@@ -75,13 +103,13 @@ deploy-sdk:
 # Deploy 3: Build & Sync Capacitor Mobile (Android)
 deploy-mobile-android: build
 	@echo "📱 Sincronizando arquivos estáticos no app Mobile Android (Capacitor)..."
-	npx cap sync android --project apps/mobile
+	cd apps/mobile && npx cap sync android
 	@echo "✅ Mobile Android sincronizado. Pronto para compilação nativa!"
 
 # Deploy 4: Build & Sync Capacitor Mobile (iOS)
 deploy-mobile-ios: build
 	@echo "🍎 Sincronizando arquivos estáticos no app Mobile iOS (Capacitor)..."
-	npx cap sync ios --project apps/mobile
+	cd apps/mobile && npx cap sync ios
 	@echo "✅ Mobile iOS sincronizado. Pronto para compilação nativa!"
 
 # Deploy 5: Build Tauri Desktop (macOS, Linux, Windows)

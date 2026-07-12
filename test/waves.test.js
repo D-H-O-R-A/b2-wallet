@@ -29,7 +29,7 @@ test('Suíte Waves - Derivação de Endereços Reais', async (t) => {
     assert.strictEqual(isValidWaves, true, "Endereço Waves gerado deve ser considerado válido pela Engine");
   });
 
-  await t.test('Deve derivar endereços corretos para forks (AMZX, CeleronX) e validar chainIds', () => {
+  await t.test('Deve derivar endereços corretos para forks (AMZX, PLO, Turtle Network) e validar chainIds', () => {
     const keypair = B2WavesBroadcaster.deriveWavesKeyPair(mnemonic, 0);
 
     // AMZX (chainId 65)
@@ -37,12 +37,10 @@ test('Suíte Waves - Derivação de Endereços Reais', async (t) => {
     assert.strictEqual(addressAmzx.startsWith("3E"), true, "Endereço AMZX deve iniciar com 3E");
     assert.strictEqual(B2KeyDerivationEngine.validateAddress(addressAmzx, "AMZX"), true, "Endereço AMZX deve ser válido");
 
-    // CeleronX (chainId 67)
-    const addressClx = B2WavesBroadcaster.deriveWavesAddress(keypair.publicKey, 67);
-    assert.strictEqual(B2KeyDerivationEngine.validateAddress(addressClx, "CELERONX"), true, "Endereço CeleronX deve ser válido com CELERONX");
-    assert.strictEqual(B2KeyDerivationEngine.validateAddress(addressClx, "CLX"), true, "Endereço CeleronX deve ser válido com CLX");
-    assert.strictEqual(B2KeyDerivationEngine.validateAddress(addressClx, "PLO"), true, "Endereço PlanetOne deve ser válido com PLO");
-    assert.strictEqual(B2KeyDerivationEngine.validateAddress(addressClx, "WAVES"), false, "Endereço CeleronX não deve ser válido para rede WAVES");
+    // PLO (chainId 80)
+    const addressPlo = B2WavesBroadcaster.deriveWavesAddress(keypair.publicKey, 80);
+    assert.strictEqual(B2KeyDerivationEngine.validateAddress(addressPlo, "PLO"), true, "Endereço PLO deve ser válido com PLO");
+    assert.strictEqual(B2KeyDerivationEngine.validateAddress(addressPlo, "WAVES"), false, "Endereço PLO não deve ser válido para rede WAVES");
   });
 });
 

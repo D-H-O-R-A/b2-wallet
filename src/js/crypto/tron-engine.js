@@ -22,15 +22,6 @@
                                 (typeof window !== 'undefined' && window.B2KeyDerivationEngine);
 
   const B2TronEngine = {
-    // Well-known TRC20 contracts for active scanning
-    wellKnownTRC20: [
-      { address: "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", symbol: "USDT", name: "Tether USD", decimals: 6 },
-      { address: "TEkxiTehnzSmSe2XqrBj4w32RUN966rdz8", symbol: "USDC", name: "USD Coin", decimals: 6 },
-      { address: "TCFLL5dx5ZJdKnWuesXxi1VPwjLVmWZZy9", symbol: "JST", name: "JUST", decimals: 18 },
-      { address: "TKkeiboTkxXKJpbmVFbv4a8ov5rAfRDMf9", symbol: "SUN", name: "SUN Token", decimals: 18 },
-      { address: "TLa2f6VPqDgRE67v1736s7bJ8Ray5wYjU7", symbol: "WIN", name: "WIN", decimals: 18 }
-    ],
-
     // -------------------------------------------------------------------------
     // KEY DERIVATION & ADDRESS GENERATION
     // -------------------------------------------------------------------------
@@ -304,8 +295,10 @@
     async getTokenBalances(address, nodeUrl, fallbacks = []) {
       const hexAddress = this.toHexAddress(address);
       const results = [];
+      const contracts = global.B2TronContracts || (global.window && global.window.B2TronContracts) || {};
+      const wellKnownTRC20 = contracts.wellKnownTRC20 || [];
 
-      for (const token of this.wellKnownTRC20) {
+      for (const token of wellKnownTRC20) {
         try {
           const contractHex = this.toHexAddress(token.address);
           const param = "000000000000000000000000" + hexAddress.substring(2);
@@ -338,173 +331,6 @@
         }
       }
       return results;
-    },
-
-    // Helper para decodificar strings retornadas por contratos ABI
-    decodeABIString(hex) {
-      if (!hex) return "";
-      let clean = hex;
-      if (clean.startsWith('0x')) clean = clean.substring(2);
-      if (clean.length < 128) return "";
-      const lenHex = clean.substring(64, 128);
-      const len = parseInt(lenHex, 16);
-      if (isNaN(len) || len === 0) return "";
-      const valueHex = clean.substring(128, 128 + len * 2);
-      let str = "";
-      for (let i = 0; i < valueHex.length; i += 2) {
-        const code = parseInt(valueHex.substring(i, i + 2), 16);
-        if (code >= 32 && code <= 126) {
-          str += String.fromCharCode(code);
-        }
-      }
-      return str;
-    },
-
-    // -------------------------------------------------------------------------
-    // TRANSACTION BUILDERS, SIGNERS & BROADCAST
-    // -------------------------------------------------------------------------
-
-    /**
-     * Constrói uma transação não assinada (TRX ou TRC20).
-     */
-    async buildTransaction(sender, recipient, amount, tokenAddress, memo = null, nodeUrl, fallbacks = []) {
-      const senderHex = this.toHexAddress(sender);
-      const recipientHex = this.toHexAddress(recipient);
-
-      let extraDataHex = undefined;
-      if (memo) {
-        const bytes = new TextEncoder().encode(memo);
-        extraDataHex = Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
-      }
-
-      if (tokenAddress) {
-        // TRC20 Token Transfer
-        const contractHex = this.toHexAddress(tokenAddress);
-        // Buscar decimais dinamicamente
-        let decimals = 18;
-        const wellKnown = this.wellKnownTRC20.find(t => t.address.toLowerCase() === tokenAddress.toLowerCase());
-        if (wellKnown) {
-          decimals = wellKnown.decimals;
-        } else {
-          try {
-            const decData = await this.fetchWithFailover("wallet/triggerconstantcontract", {
-              owner_address: senderHex,
-              contract_address: contractHex,
-              function_selector: "decimals()",
-              parameter: ""
-            }, "POST", nodeUrl, fallbacks);
-            if (decData && decData.constant_result && decData.constant_result.length > 0) {
-              decimals = parseInt(decData.constant_result[0], 16);
-            }
-          } catch (e) {
-            console.warn('[TRON Engine] Failed to fetch token decimals dynamically, using 18:', e.message);
-          }
-        }
-
-        const rawAmount = BigInt(Math.round(amount * Math.pow(10, decimals)));
-        const paramRecipient = "000000000000000000000000" + recipientHex.substring(2);
-        const paramAmount = rawAmount.toString(16).padStart(64, '0');
-        const parameter = paramRecipient + paramAmount;
-
-        const data = await this.fetchWithFailover("wallet/triggersmartcontract", {
-          owner_address: senderHex,
-          contract_address: contractHex,
-          function_selector: "transfer(address,uint256)",
-          parameter: parameter,
-          fee_limit: 150000000, // 150 TRX max cost
-          call_value: 0
-        }, "POST", nodeUrl, fallbacks);
-
-        if (!data || !data.transaction) {
-          throw new Error('Failed to build TRC20 transfer transaction: ' + JSON.stringify(data));
-        }
-
-        // NOTE: Memos are officially not supported on triggerSmartContract outer containers
-        // in a straightforward way without txID recalculation. We omit it here to avoid signature mismatches.
-        return data.transaction;
-      } else {
-        // Standard TRX Transfer
-        const rawAmount = Math.round(amount * 1e6); // em Sun
-        const requestBody = {
-          owner_address: senderHex,
-          to_address: recipientHex,
-          amount: rawAmount
-        };
-        if (extraDataHex) {
-          requestBody.extra_data = extraDataHex;
-        }
-
-        const data = await this.fetchWithFailover("wallet/createtransaction", requestBody, "POST", nodeUrl, fallbacks);
-
-        if (!data || !data.txID) {
-          throw new Error('Failed to build TRX transfer transaction: ' + JSON.stringify(data));
-        }
-        return data;
-      }
-    },
-
-    /**
-     * Assina localmente com a chave privada secp256k1.
-     */
-    signTransaction(transaction, privateKeyHex) {
-      if (!global.ethers) {
-        throw new Error('Ethers.js library is not loaded');
-      }
-      const txID = transaction.txID;
-      if (!txID) {
-        throw new Error('Transaction has no txID to sign');
-      }
-
-      const messageHashBytes = global.ethers.getBytes("0x" + txID);
-      const signingKey = new global.ethers.SigningKey("0x" + privateKeyHex);
-      const sig = signingKey.sign(messageHashBytes);
-
-      const rHex = sig.r.substring(2);
-      const sHex = sig.s.substring(2);
-      const vHex = sig.yParity.toString(16).padStart(2, '0');
-      const signatureHex = rHex + sHex + vHex;
-
-      transaction.signature = [signatureHex];
-      return transaction;
-    },
-
-    /**
-     * Envia a transação assinada para a blockchain real com failover.
-     */
-    async broadcastTransaction(signedTransaction, nodeUrl, fallbacks = []) {
-      try {
-        const data = await this.fetchWithFailover("wallet/broadcasttransaction", signedTransaction, "POST", nodeUrl, fallbacks);
-        if (data && data.result) {
-          return {
-            success: true,
-            txId: signedTransaction.txID || data.txid
-          };
-        } else {
-          const msg = data && data.message ? (typeof data.message === 'string' ? data.message : JSON.stringify(data.message)) : 'Broadcast rejected';
-          throw new Error(msg);
-        }
-      } catch (e) {
-        console.error('[TRON Engine] broadcastTransaction failed:', e.message);
-        throw e;
-      }
-    },
-
-    /**
-     * Constrói e assina uma transferência (TRX ou TRC20) localmente (offline).
-     */
-    async signTransfer(mnemonic, nodeUrl, recipient, amount, tokenAddress = null, memo = null, fallbacks = [], index = 0) {
-      const keyPair = this.deriveTronKeyPair(mnemonic, index);
-      const tx = await this.buildTransaction(keyPair.address, recipient, amount, tokenAddress, memo, nodeUrl, fallbacks);
-      const signed = this.signTransaction(tx, keyPair.privateKeyHex);
-      return signed; // returns signed transaction object containing txID and signature
-    },
-
-    /**
-     * Constrói, assina e transmite uma transferência (TRX ou TRC20) de forma unificada.
-     */
-    async sendTransfer(mnemonic, nodeUrl, recipient, amount, tokenAddress = null, memo = null, fallbacks = [], index = 0) {
-      const signed = await this.signTransfer(mnemonic, nodeUrl, recipient, amount, tokenAddress, memo, fallbacks, index);
-      return await this.broadcastTransaction(signed, nodeUrl, fallbacks);
     },
 
     // -------------------------------------------------------------------------
@@ -631,165 +457,6 @@
           totalFeeTRX: 0,
           isRecipientUnactivated: false
         };
-      }
-    },
-
-    // -------------------------------------------------------------------------
-    // STAKE 2.0 IMPLEMENTATION & LOOKUPS
-    // -------------------------------------------------------------------------
-
-    async freezeBalanceV2(mnemonic, amount, resource, nodeUrl, fallbacks = [], index = 0) {
-      const keyPair = this.deriveTronKeyPair(mnemonic, index);
-      const data = await this.fetchWithFailover("wallet/freezebalancev2", {
-        owner_address: keyPair.hexAddress,
-        frozen_balance: Math.round(amount * 1e6),
-        resource: resource // "BANDWIDTH" ou "ENERGY"
-      }, "POST", nodeUrl, fallbacks);
-
-      if (!data || !data.txID) {
-        throw new Error('Failed to build freeze transaction: ' + JSON.stringify(data));
-      }
-      const signed = this.signTransaction(data, keyPair.privateKeyHex);
-      return await this.broadcastTransaction(signed, nodeUrl, fallbacks);
-    },
-
-    async unfreezeBalanceV2(mnemonic, amount, resource, nodeUrl, fallbacks = [], index = 0) {
-      const keyPair = this.deriveTronKeyPair(mnemonic, index);
-      const data = await this.fetchWithFailover("wallet/unfreezebalancev2", {
-        owner_address: keyPair.hexAddress,
-        unfreeze_balance: Math.round(amount * 1e6),
-        resource: resource // "BANDWIDTH" ou "ENERGY"
-      }, "POST", nodeUrl, fallbacks);
-
-      if (!data || !data.txID) {
-        throw new Error('Failed to build unfreeze transaction: ' + JSON.stringify(data));
-      }
-      const signed = this.signTransaction(data, keyPair.privateKeyHex);
-      return await this.broadcastTransaction(signed, nodeUrl, fallbacks);
-    },
-
-    async stake(mnemonic, amount, resource, nodeUrl, fallbacks = []) {
-      return await this.freezeBalanceV2(mnemonic, amount, resource, nodeUrl, fallbacks);
-    },
-
-    async unstake(mnemonic, amount, resource, nodeUrl, fallbacks = []) {
-      return await this.unfreezeBalanceV2(mnemonic, amount, resource, nodeUrl, fallbacks);
-    },
-
-    async delegateResource(mnemonic, receiver, amount, resource, lock, nodeUrl, fallbacks = [], index = 0) {
-      const keyPair = this.deriveTronKeyPair(mnemonic, index);
-      const receiverHex = this.toHexAddress(receiver);
-      const data = await this.fetchWithFailover("wallet/delegateresource", {
-        owner_address: keyPair.hexAddress,
-        receiver_address: receiverHex,
-        balance: Math.round(amount * 1e6),
-        resource: resource, // "BANDWIDTH" ou "ENERGY"
-        lock: !!lock
-      }, "POST", nodeUrl, fallbacks);
-
-      if (!data || !data.txID) {
-        throw new Error('Failed to build delegate transaction: ' + JSON.stringify(data));
-      }
-      const signed = this.signTransaction(data, keyPair.privateKeyHex);
-      return await this.broadcastTransaction(signed, nodeUrl, fallbacks);
-    },
-
-    async undelegateResource(mnemonic, receiver, amount, resource, nodeUrl, fallbacks = [], index = 0) {
-      const keyPair = this.deriveTronKeyPair(mnemonic, index);
-      const receiverHex = this.toHexAddress(receiver);
-      const data = await this.fetchWithFailover("wallet/undelegateresource", {
-        owner_address: keyPair.hexAddress,
-        receiver_address: receiverHex,
-        balance: Math.round(amount * 1e6),
-        resource: resource // "BANDWIDTH" ou "ENERGY"
-      }, "POST", nodeUrl, fallbacks);
-
-      if (!data || !data.txID) {
-        throw new Error('Failed to build undelegate transaction: ' + JSON.stringify(data));
-      }
-      const signed = this.signTransaction(data, keyPair.privateKeyHex);
-      return await this.broadcastTransaction(signed, nodeUrl, fallbacks);
-    },
-
-    async cancelUnfreezeBalanceV2(mnemonic, nodeUrl, fallbacks = [], index = 0) {
-      const keyPair = this.deriveTronKeyPair(mnemonic, index);
-      const data = await this.fetchWithFailover("wallet/cancelallunfreezev2", {
-        owner_address: keyPair.hexAddress
-      }, "POST", nodeUrl, fallbacks);
-
-      if (!data || !data.txID) {
-        throw new Error('Failed to build cancel unfreeze transaction: ' + JSON.stringify(data));
-      }
-      const signed = this.signTransaction(data, keyPair.privateKeyHex);
-      return await this.broadcastTransaction(signed, nodeUrl, fallbacks);
-    },
-
-    async withdrawExpireUnfreeze(mnemonic, nodeUrl, fallbacks = [], index = 0) {
-      const keyPair = this.deriveTronKeyPair(mnemonic, index);
-      const data = await this.fetchWithFailover("wallet/withdrawexpireunfreeze", {
-        owner_address: keyPair.hexAddress
-      }, "POST", nodeUrl, fallbacks);
-
-      if (!data || !data.txID) {
-        throw new Error('Failed to build withdraw expire unfreeze transaction: ' + JSON.stringify(data));
-      }
-      const signed = this.signTransaction(data, keyPair.privateKeyHex);
-      return await this.broadcastTransaction(signed, nodeUrl, fallbacks);
-    },
-
-    async getDelegatedResources(address, nodeUrl, fallbacks = []) {
-      const hexAddress = this.toHexAddress(address);
-      try {
-        const data = await this.fetchWithFailover("wallet/getdelegatedresourceaccountindexv2", { value: hexAddress }, "POST", nodeUrl, fallbacks);
-        const delegated = [];
-        if (data && Array.isArray(data.toAccounts)) {
-          for (const toAcc of data.toAccounts) {
-            const detail = await this.fetchWithFailover("wallet/getdelegatedresourcev2", {
-              fromAddress: hexAddress,
-              toAddress: toAcc
-            }, "POST", nodeUrl, fallbacks);
-            if (detail && Array.isArray(detail.delegatedResource)) {
-              for (const res of detail.delegatedResource) {
-                delegated.push({
-                  to: this.toBase58Address(toAcc),
-                  frozen_balance_for_bandwidth: (res.frozen_balance_for_bandwidth || 0) / 1e6,
-                  frozen_balance_for_energy: (res.frozen_balance_for_energy || 0) / 1e6,
-                  expire_time_for_bandwidth: res.expire_time_for_bandwidth || 0,
-                  expire_time_for_energy: res.expire_time_for_energy || 0
-                });
-              }
-            }
-          }
-        }
-        return delegated;
-      } catch (e) {
-        console.warn('[TRON Engine] getDelegatedResources failed, returning empty list:', e.message);
-        return [];
-      }
-    },
-
-    async getAvailableUnfreezeCount(address, nodeUrl, fallbacks = []) {
-      const hexAddress = this.toHexAddress(address);
-      try {
-        const data = await this.fetchWithFailover("wallet/getavailableunfreezecount", { ownerAddress: hexAddress }, "POST", nodeUrl, fallbacks);
-        return data && typeof data.count !== 'undefined' ? data.count : 32;
-      } catch (e) {
-        console.warn('[TRON Engine] getAvailableUnfreezeCount failed, returning 32:', e.message);
-        return 32;
-      }
-    },
-
-    async getCanWithdrawUnfreeze(address, nodeUrl, fallbacks = []) {
-      const hexAddress = this.toHexAddress(address);
-      try {
-        const data = await this.fetchWithFailover("wallet/getcanwithdrawunfreezeamount", {
-          owner_address: hexAddress,
-          timestamp: Date.now()
-        }, "POST", nodeUrl, fallbacks);
-        return data && typeof data.amount !== 'undefined' ? data.amount / 1e6 : 0.0;
-      } catch (e) {
-        console.warn('[TRON Engine] getCanWithdrawUnfreeze failed, returning 0.0:', e.message);
-        return 0.0;
       }
     },
 
@@ -1089,151 +756,18 @@
     }
   };
 
-  // -------------------------------------------------------------------------
-  // STORAGE PROVIDER & METADATA CACHE
-  // -------------------------------------------------------------------------
+  // Mix in submodules for transaction construction and metadata
+  const contracts = global.B2TronContracts || (global.window && global.window.B2TronContracts) || {};
+  const transactions = global.B2TronTransactions || (global.window && global.window.B2TronTransactions) || {};
 
-  const B2StorageProvider = global.B2StorageProvider || {
-    getItem(key) {
-      try {
-        return localStorage.getItem(key);
-      } catch (e) {
-        return null;
-      }
-    },
-    setItem(key, value) {
-      try {
-        localStorage.setItem(key, value);
-      } catch (e) {}
-    },
-    removeItem(key) {
-      try {
-        localStorage.removeItem(key);
-      } catch (e) {}
-    },
-    async getItemAsync(key) {
-      return this.getItem(key);
-    },
-    async setItemAsync(key, value) {
-      this.setItem(key, value);
-    }
-  };
-  global.B2StorageProvider = B2StorageProvider;
+  // Attach configuration & contracts helper
+  B2TronEngine.wellKnownTRC20 = contracts.wellKnownTRC20;
+  B2TronEngine.decodeABIString = contracts.decodeABIString;
+  B2TronEngine.B2TronTokenMetadataProvider = contracts.B2TronTokenMetadataProvider;
+  B2TronEngine.B2StorageProvider = global.B2StorageProvider || (global.window && global.window.B2StorageProvider) || contracts.B2StorageProvider;
 
-  class LRUCache {
-    constructor(limit = 100) {
-      this.limit = limit;
-      this.cache = new Map();
-    }
-
-    get(key) {
-      if (!this.cache.has(key)) return null;
-      const value = this.cache.get(key);
-      this.cache.delete(key);
-      this.cache.set(key, value);
-      return value;
-    }
-
-    set(key, value) {
-      if (this.cache.has(key)) {
-        this.cache.delete(key);
-      } else if (this.cache.size >= this.limit) {
-        const oldestKey = this.cache.keys().next().value;
-        this.cache.delete(oldestKey);
-      }
-      this.cache.set(key, value);
-    }
-  }
-
-  const B2TronTokenMetadataProvider = {
-    cache: new LRUCache(100),
-
-    async getMetadata(contractAddress, nodeUrl, fallbacks = []) {
-      if (!contractAddress) return null;
-      try {
-        const cleanAddress = B2TronEngine.toBase58Address(contractAddress);
-        
-        // In-memory LRU check
-        const cached = this.cache.get(cleanAddress);
-        if (cached) {
-          return cached;
-        }
-
-        // Storage Provider check
-        const storedStr = B2StorageProvider.getItem(`trc20_meta_${cleanAddress}`);
-        if (storedStr) {
-          try {
-            const parsed = JSON.parse(storedStr);
-            this.cache.set(cleanAddress, parsed);
-            return parsed;
-          } catch (e) {}
-        }
-
-        // Well-known check
-        const wellKnown = B2TronEngine.wellKnownTRC20.find(t => t.address.toLowerCase() === cleanAddress.toLowerCase());
-        if (wellKnown) {
-          const meta = {
-            address: wellKnown.address,
-            symbol: wellKnown.symbol,
-            name: wellKnown.name,
-            decimals: wellKnown.decimals
-          };
-          this.cache.set(cleanAddress, meta);
-          B2StorageProvider.setItem(`trc20_meta_${cleanAddress}`, JSON.stringify(meta));
-          return meta;
-        }
-
-        // Dynamic Query
-        const contractHex = B2TronEngine.toHexAddress(cleanAddress);
-        const [nameData, symData, decData] = await Promise.all([
-          B2TronEngine.fetchWithFailover("wallet/triggerconstantcontract", {
-            owner_address: "410000000000000000000000000000000000000000",
-            contract_address: contractHex,
-            function_selector: "name()",
-            parameter: ""
-          }, "POST", nodeUrl, fallbacks).catch(() => null),
-          B2TronEngine.fetchWithFailover("wallet/triggerconstantcontract", {
-            owner_address: "410000000000000000000000000000000000000000",
-            contract_address: contractHex,
-            function_selector: "symbol()",
-            parameter: ""
-          }, "POST", nodeUrl, fallbacks).catch(() => null),
-          B2TronEngine.fetchWithFailover("wallet/triggerconstantcontract", {
-            owner_address: "410000000000000000000000000000000000000000",
-            contract_address: contractHex,
-            function_selector: "decimals()",
-            parameter: ""
-          }, "POST", nodeUrl, fallbacks).catch(() => null)
-        ]);
-
-        let name = "Unknown TRC20";
-        let symbol = "TRC20";
-        let decimals = 18;
-
-        if (nameData && nameData.constant_result && nameData.constant_result[0]) {
-          name = B2TronEngine.decodeABIString(nameData.constant_result[0]) || "Unknown TRC20";
-        }
-        if (symData && symData.constant_result && symData.constant_result[0]) {
-          symbol = B2TronEngine.decodeABIString(symData.constant_result[0]) || "TRC20";
-        }
-        if (decData && decData.constant_result && decData.constant_result[0]) {
-          decimals = parseInt(decData.constant_result[0], 16) || 18;
-        }
-
-        const meta = { address: cleanAddress, symbol, name, decimals };
-        this.cache.set(cleanAddress, meta);
-        B2StorageProvider.setItem(`trc20_meta_${cleanAddress}`, JSON.stringify(meta));
-        return meta;
-      } catch (e) {
-        console.warn('[B2TronTokenMetadataProvider] Resolve failed:', e.message);
-        return { address: contractAddress, symbol: "TRC20", name: "Unknown TRC20", decimals: 18 };
-      }
-    }
-  };
-
-  // Expose helpers on the engine object
-  B2TronEngine.B2TronTokenMetadataProvider = B2TronTokenMetadataProvider;
-  B2TronEngine.B2StorageProvider = B2StorageProvider;
+  // Mixin transactions and Stake 2.0 capabilities
+  Object.assign(B2TronEngine, transactions);
 
   // Global exports
   if (typeof module !== 'undefined' && module.exports) {
@@ -1241,11 +775,7 @@
   }
   if (global.window) {
     global.window.B2TronEngine = B2TronEngine;
-    global.window.B2TronTokenMetadataProvider = B2TronTokenMetadataProvider;
-    global.window.B2StorageProvider = B2StorageProvider;
   } else {
     global.B2TronEngine = B2TronEngine;
-    global.B2TronTokenMetadataProvider = B2TronTokenMetadataProvider;
-    global.B2StorageProvider = B2StorageProvider;
   }
 })(typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : global);

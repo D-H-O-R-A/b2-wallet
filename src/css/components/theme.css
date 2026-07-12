@@ -1,0 +1,199 @@
+/* ==========================================================================
+   REGRAS DE CONTRASTE E GLASSMOPHISM - TEMA CLARO (PREMIUM LIGHT)
+   ========================================================================== */
+[data-theme="light"] {
+
+  /* Scrollbar customizada clara */
+  ::-webkit-scrollbar-thumb {
+    background: rgba(15, 23, 42, 0.15) !important;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(15, 23, 42, 0.28) !important;
+  }
+
+  /* Manter a scrollbar do log do desenvolvedor escura/legível */
+  .console-log::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .console-log::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.30) !important;
+  }
+
+  /* Header da Carteira */
+  .wallet-header {
+    background: var(--bg-panel) !important;
+    border-bottom: 1px solid var(--border-subtle) !important;
+    backdrop-filter: var(--glass-blur) !important;
+    -webkit-backdrop-filter: var(--glass-blur) !important;
+  }
+
+  /* Card de saldo principal */
+  .dashboard-balance-header {
+    background: linear-gradient(180deg,
+        rgba(15, 23, 42, 0.03) 0%,
+        rgba(15, 23, 42, 0.008) 100%) !important;
+    border: 1px solid rgba(15, 23, 42, 0.08) !important;
+  }
+
+  .dashboard-balance-header::after {
+    background: radial-gradient(circle, rgba(15, 23, 42, 0.04) 0%, transparent 70%) !important;
+  }
+
+  /* Botões de Ação Rápidos (Send, Receive, etc.) */
+  .action-btn {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  .action-btn::before {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, transparent 60%) !important;
+  }
+
+  .action-btn-icon {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  .action-btn:hover {
+    background: var(--bg-card-hover) !important;
+    border-color: var(--border-medium) !important;
+  }
+
+  /* Badge de Endereço */
+  .address-badge {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  .address-badge:hover {
+    background: var(--color-primary-dim) !important;
+    border-color: var(--color-primary) !important;
+  }
+
+  /* Badges de Seleção de Blockchain */
+  .chain-selector-badge {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  /* Linhas de Blockchains na Home */
+  .blockchain-row {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  .blockchain-row::before {
+    background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.05), transparent) !important;
+  }
+
+  .blockchain-row:hover {
+    background: var(--bg-card-hover) !important;
+    border-color: var(--border-medium) !important;
+    box-shadow: var(--shadow-md) !important;
+  }
+
+  .blockchain-row.active-focus-row {
+    background: var(--bg-card-hover) !important;
+    border-left: 2.5px solid var(--active-chain-color, var(--color-primary)) !important;
+  }
+
+  .blockchain-row-action-btn {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  /* Modais e Bottom-Sheets */
+  .b2-modal-content {
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--border-medium) !important;
+    box-shadow: var(--shadow-xl) !important;
+  }
+
+  .b2-modal-content::before {
+    background: rgba(15, 23, 42, 0.15) !important;
+  }
+
+  /* Card de Taxa de Gas */
+  .gas-fee-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.02) 0%, rgba(15, 23, 42, 0.005) 100%) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  /* Chip de Conta Ativa (Topo) */
+  .account-chip {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  .account-chip:hover {
+    background: var(--bg-active) !important;
+    border-color: var(--border-medium) !important;
+  }
+
+  /* Abas Ativas */
+  .tab-btn.active {
+    background: var(--bg-active) !important;
+    box-shadow: 0 1px 0 var(--color-primary) inset !important;
+  }
+
+  /* Cards de Palavras da Seed (Mnemônico) */
+  .seed-word-card {
+    background: var(--bg-hover) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  .seed-word-card:hover {
+    background: var(--bg-active) !important;
+    border-color: var(--border-medium) !important;
+  }
+
+  /* Campos de Entrada de Texto (Inputs) */
+  .form-input {
+    background: var(--bg-input) !important;
+    border: 1px solid var(--border-light) !important;
+    color: var(--text-primary) !important;
+  }
+
+  .form-input:focus {
+    background: var(--bg-input) !important;
+    border-color: var(--color-primary) !important;
+    box-shadow: 0 0 0 3px var(--color-primary-dim) !important;
+  }
+
+  /* Cards de Funcionalidades */
+  .feature-card {
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-light) !important;
+  }
+
+  .feature-card::after {
+    background: linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.06), transparent) !important;
+  }
+
+  /* Notificações Toasts */
+  .b2-toast {
+    background: var(--bg-panel) !important;
+    border: 1px solid var(--border-medium) !important;
+    box-shadow: var(--shadow-lg) !important;
+  }
+
+  /* Menu de Navegação Inferior */
+  .wallet-nav {
+    background: var(--bg-panel) !important;
+    border-top: 1px solid var(--border-subtle) !important;
+  }
+
+  /* Correção do bug do modo light no wallet-shell */
+  .wallet-shell {
+    background: linear-gradient(145deg,
+        rgba(248, 250, 252, 0.95) 0%,
+        rgba(241, 245, 249, 0.94) 50%,
+        rgba(226, 232, 240, 0.95) 100%) !important;
+    box-shadow:
+      var(--shadow-xl),
+      0 0 0 1px rgba(15, 23, 42, 0.04) inset,
+      0 1px 0 rgba(15, 23, 42, 0.06) inset !important;
+  }
+}

@@ -424,7 +424,7 @@
     window.cardano.b2wallet = {
       name: "B2 Wallet",
       icon: "src/img/cardano.png",
-      apiVersion: "0.1.3",
+      apiVersion: "0.1.5",
       enable: async () => {
         return {
           getNetworkId: async () => 1,

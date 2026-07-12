@@ -84,8 +84,8 @@ Para fornecer uma alternativa de recuperação segura, a B2 Wallet permite ao us
 ### 4.1 Exemplo de Estrutura do Arquivo Exportável
 ```json
 {
-  "version": "0.1.3",
-"version_name": "0.1.3 beta",
+  "version": "0.1.5",
+"version_name": "0.1.5 beta",
   "generator": "better2better.com.br",
   "engineer": "Diego Oris",
   "payload": {

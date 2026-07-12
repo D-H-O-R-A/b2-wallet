@@ -1,7 +1,6 @@
 {
   "productName": "B2 Wallet",
-  "version": "0.1.3",
-  "version_name": "0.1.3 beta",
+  "version": "0.1.5",
   "identifier": "com.better2better.b2wallet",
   "build": {
     "beforeDevCommand": "",

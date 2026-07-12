@@ -1,0 +1,792 @@
+/* =============================================
+   PREMIUM v3.0 — APPLE / NETFLIX LEVEL POLISH
+   Tech Lead: Diego Oris (Better2Better)
+   ============================================= */
+
+/* --- Gradiente animado no fundo do wallet-shell --- */
+@keyframes bg-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.wallet-shell {
+  background: linear-gradient(145deg,
+      rgba(10, 11, 18, 0.97) 0%,
+      rgba(14, 12, 24, 0.96) 50%,
+      rgba(8, 10, 16, 0.97) 100%);
+  background-size: 200% 200%;
+  animation: bg-shift 12s ease infinite;
+  box-shadow:
+    var(--shadow-xl),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 1px 0 rgba(255, 255, 255, 0.07) inset;
+}
+
+/* --- Balance fiat com counter animado --- */
+@keyframes balance-pop {
+  0% {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.03);
+  }
+
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.balance-fiat-primary {
+  animation: balance-pop 0.45s var(--ease-out) both;
+  background: linear-gradient(135deg, #f1f5f9 0%, rgba(245, 158, 11, 0.6) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-size: clamp(1.6rem, 6vw, 2.2rem);
+  filter: drop-shadow(0 2px 12px rgba(245, 158, 11, 0.15));
+}
+
+[data-theme="light"] .balance-fiat-primary {
+  background: linear-gradient(135deg, #0f172a 0%, #d97706 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* --- Dashboard balance header OLED premium --- */
+.dashboard-balance-header {
+  background: linear-gradient(180deg,
+      rgba(255, 255, 255, 0.030) 0%,
+      rgba(255, 255, 255, 0.008) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  flex-shrink: 0;
+  /* Impede esmagamento no OLED Premium style */
+}
+
+/* Brilho de canto superior esquerdo */
+.dashboard-balance-header::after {
+  content: '';
+  position: absolute;
+  top: -40px;
+  left: -40px;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, var(--active-chain-color, var(--color-primary)) 0%, transparent 70%);
+  opacity: 0.07;
+  pointer-events: none;
+  border-radius: 50%;
+  transition: opacity 0.6s ease;
+}
+
+.dashboard-balance-header:hover::after {
+  opacity: 0.13;
+}
+
+/* --- Botões de ação premium --- */
+.action-btn {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: rgba(255, 255, 255, 0.03);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.action-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.06) 0%, transparent 60%);
+  border-radius: inherit;
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.action-btn:hover::before {
+  opacity: 1;
+}
+
+.action-btn-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+}
+
+.action-btn:hover .action-btn-icon {
+  background: var(--color-primary-dim);
+  border-color: var(--color-primary);
+  box-shadow: 0 0 14px var(--color-primary-dim);
+  transform: translateY(-1px);
+}
+
+.action-btn:hover .action-btn-icon svg {
+  color: var(--color-primary);
+}
+
+.action-btn.action-btn-special:hover .action-btn-icon {
+  background: var(--color-secondary-dim);
+  border-color: var(--color-secondary);
+  box-shadow: 0 0 14px var(--color-secondary-dim);
+}
+
+.action-btn.action-btn-special:hover .action-btn-icon svg {
+  color: var(--color-secondary);
+}
+
+/* --- Badge de endereço premium --- */
+.address-badge {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: var(--radius-sm);
+  padding: 5px var(--space-3);
+  transition: all var(--transition-fast);
+  overflow: hidden;
+}
+
+.address-badge::after {
+  content: 'Copiar';
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-bold);
+  color: var(--color-primary);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+  pointer-events: none;
+}
+
+.address-badge:hover::after {
+  opacity: 1;
+}
+
+.address-badge:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-dim);
+  padding-right: 52px;
+}
+
+/* --- Chain selector badges premium --- */
+.chain-selector-badge {
+  border-radius: var(--radius-full);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  transition: all 0.2s var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.chain-selector-badge::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, transparent 100%);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.chain-selector-badge:hover::before {
+  opacity: 1;
+}
+
+.chain-selector-badge.active {
+  background: var(--active-chain-color, var(--color-primary));
+  border-color: transparent;
+  box-shadow:
+    0 0 16px color-mix(in srgb, var(--active-chain-color, var(--color-primary)) 40%, transparent),
+    0 2px 8px rgba(0, 0, 0, 0.3);
+  color: #000;
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+}
+
+/* --- Blockchain row premium --- */
+.blockchain-row {
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.02);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s var(--ease-out);
+  position: relative;
+  overflow: hidden;
+}
+
+.blockchain-row::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.blockchain-row:hover::before {
+  opacity: 1;
+}
+
+.blockchain-row:hover {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.10);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.blockchain-row.active-focus-row {
+  background: rgba(255, 255, 255, 0.025);
+  border-left: 2.5px solid var(--active-chain-color, var(--color-primary));
+  box-shadow:
+    -4px 0 16px color-mix(in srgb, var(--active-chain-color, var(--color-primary)) 15%, transparent),
+    0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Quick-action buttons inside blockchain row */
+.blockchain-row-actions {
+  display: flex;
+  gap: var(--space-1);
+  opacity: 0;
+  transform: translateX(6px);
+  transition: all 0.2s var(--ease-out);
+  flex-shrink: 0;
+}
+
+.blockchain-row:hover .blockchain-row-actions {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.blockchain-row-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.blockchain-row-action-btn:hover {
+  background: var(--color-primary-dim);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  transform: scale(1.1);
+}
+
+.blockchain-row-action-btn.send-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #ef4444;
+}
+
+.blockchain-row-action-btn.faucet-btn:hover {
+  background: rgba(59, 130, 246, 0.12);
+  border-color: rgba(59, 130, 246, 0.4);
+  color: #3b82f6;
+}
+
+/* --- Modais ultra-premium --- */
+.b2-modal-content {
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    0 32px 64px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset,
+    0 1px 0 rgba(255, 255, 255, 0.08) inset;
+}
+
+/* Handle drag bar no topo dos modais bottom-sheet */
+.b2-modal-content::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: var(--radius-full);
+  margin: -12px auto var(--space-5);
+}
+
+.b2-modal.modal-centered .b2-modal-content::before {
+  display: none;
+}
+
+/* --- Gas fee card premium --- */
+.gas-fee-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.02) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  position: relative;
+  overflow: hidden;
+}
+
+.gas-fee-card::before {
+  content: '⛽';
+  position: absolute;
+  right: var(--space-3);
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.5rem;
+  opacity: 0.04;
+  pointer-events: none;
+}
+
+/* --- QR Code modal premium --- */
+.qr-code-container {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow:
+    0 0 0 1px rgba(0, 0, 0, 0.06),
+    0 8px 32px rgba(0, 0, 0, 0.2),
+    0 0 0 8px rgba(255, 255, 255, 0.05);
+  position: relative;
+  transition: transform var(--transition-normal);
+}
+
+.qr-code-container:hover {
+  transform: scale(1.02);
+}
+
+/* Brilho externo no QR code — identidade da chain */
+.qr-code-wrapper::before {
+  content: '';
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  border-radius: var(--radius-xl);
+  background: radial-gradient(circle, var(--active-chain-color, var(--color-primary)) 0%, transparent 70%);
+  opacity: 0.08;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* --- Network Status Indicator (dot animado) --- */
+@keyframes net-pulse {
+
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+  }
+
+  50% {
+    box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+  }
+}
+
+.network-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--text-success);
+  animation: net-pulse 2.5s ease-in-out infinite;
+  flex-shrink: 0;
+}
+
+.network-status-dot.offline {
+  background: var(--text-danger);
+  animation: none;
+}
+
+.network-status-dot.syncing {
+  background: var(--text-warning);
+}
+
+/* --- Chip de conta com gradiente premium --- */
+.account-chip {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.04) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: all 0.2s var(--ease-out);
+}
+
+.account-chip:hover {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-1px);
+}
+
+/* --- Tab buttons premium --- */
+.tab-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s var(--ease-out);
+}
+
+.tab-btn.active {
+  background: rgba(255, 255, 255, 0.07);
+  color: var(--color-primary);
+  box-shadow: 0 1px 0 var(--color-primary) inset;
+}
+
+.tab-btn.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 20px;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+/* --- Btn primary premium com gradiente --- */
+.btn-primary {
+  background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-hover) 100%);
+  box-shadow: 0 2px 12px rgba(245, 158, 11, 0.25);
+  letter-spacing: 0.01em;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+  left: 100%;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.40);
+  transform: translateY(-1px);
+}
+
+/* --- Seed word cards premium --- */
+.seed-word-card {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  transition: all var(--transition-fast);
+  position: relative;
+  overflow: hidden;
+}
+
+.seed-word-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--color-primary);
+  opacity: 0.4;
+}
+
+.seed-word-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.10);
+}
+
+/* --- Form input premium com glow animado --- */
+.form-input {
+  background: rgba(255, 255, 255, 0.025);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15) inset;
+  transition: all 0.2s var(--ease-out);
+}
+
+.form-input:focus {
+  border-color: var(--color-primary);
+  box-shadow:
+    0 0 0 3px rgba(245, 158, 11, 0.12),
+    0 1px 2px rgba(0, 0, 0, 0.15) inset;
+  background: rgba(255, 255, 255, 0.035);
+}
+
+/* --- Sparkline canvas melhorado --- */
+.sparkline-canvas {
+  border-radius: var(--radius-xs);
+  opacity: 0.85;
+  transition: opacity var(--transition-fast);
+}
+
+.blockchain-row:hover .sparkline-canvas {
+  opacity: 1;
+}
+
+/* --- Leasing node card premium --- */
+.leasing-node-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.2s var(--ease-out);
+}
+
+.leasing-node-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+  opacity: 0;
+  transition: opacity var(--transition-fast);
+}
+
+.leasing-node-card:hover::before {
+  opacity: 1;
+}
+
+.leasing-node-card.selected {
+  border-color: var(--active-chain-color, var(--color-primary));
+  background: color-mix(in srgb, var(--active-chain-color, var(--color-primary)) 5%, transparent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--active-chain-color, var(--color-primary)) 10%, transparent);
+}
+
+/* --- Feature card premium --- */
+.feature-card {
+  background: rgba(255, 255, 255, 0.018);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  left: 20px;
+  right: 20px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+}
+
+/* --- Toast premium com blur --- */
+.b2-toast {
+  background: rgba(12, 13, 18, 0.92);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
+}
+
+.b2-toast-success {
+  border-left: 3px solid var(--text-success);
+}
+
+.b2-toast-error {
+  border-left: 3px solid var(--text-danger);
+}
+
+.b2-toast-warning {
+  border-left: 3px solid var(--text-warning);
+}
+
+.b2-toast-info {
+  border-left: 3px solid var(--text-info);
+}
+
+/* --- Scrollbar customizada premium --- */
+::-webkit-scrollbar {
+  width: 3px;
+  height: 3px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.10);
+  border-radius: var(--radius-full);
+  transition: background var(--transition-fast);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.20);
+}
+
+/* --- Wallet nav bar premium --- */
+.wallet-nav {
+  background: rgba(8, 9, 14, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-2) var(--space-3) calc(var(--space-2) + env(safe-area-inset-bottom));
+  gap: var(--space-1);
+}
+
+.nav-item {
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-3);
+  transition: all 0.2s var(--ease-out);
+  position: relative;
+}
+
+.nav-item.active {
+  color: var(--color-primary);
+  background: var(--color-primary-dim);
+}
+
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 16px;
+  height: 2px;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+/* --- Wallet header premium --- */
+.wallet-header {
+  background: rgba(6, 6, 8, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding: var(--space-3) var(--space-5);
+}
+
+/* --- Logo text glow --- */
+.wallet-logo-text {
+  filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.25));
+  letter-spacing: -0.5px;
+}
+
+/* --- View transitions --- */
+@keyframes view-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+    filter: blur(2px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
+}
+
+.animate-view {
+  animation: view-enter 0.32s var(--ease-out) both;
+}
+
+/* --- Input PIN dots style --- */
+input[type="password"].form-input {
+  letter-spacing: 0.4em;
+  font-size: var(--text-base);
+  text-align: center;
+}
+
+/* --- Progress/loading bar --- */
+@keyframes progress-bar {
+  0% {
+    width: 0%;
+  }
+
+  100% {
+    width: 100%;
+  }
+}
+
+.loading-bar {
+  height: 2px;
+  background: linear-gradient(90deg, var(--color-primary), var(--color-secondary));
+  animation: progress-bar 2s ease-in-out infinite alternate;
+  border-radius: var(--radius-full);
+}
+
+/* --- Micro badge status (confirmed, pending, failed) --- */
+.tx-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-2xs);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.03em;
+}
+
+.tx-status-badge.confirmed {
+  background: rgba(16, 185, 129, 0.12);
+  color: var(--text-success);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.tx-status-badge.pending {
+  background: rgba(245, 158, 11, 0.12);
+  color: var(--text-warning);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+}
+
+.tx-status-badge.failed {
+  background: rgba(239, 68, 68, 0.12);
+  color: var(--text-danger);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+/* --- Responsive melhorias --- */
+@media (max-width: 480px) {
+  .balance-fiat-primary {
+    font-size: 2rem;
+  }
+
+  .action-btn {
+    padding: var(--space-2) var(--space-1);
+  }
+
+  .action-btn span {
+    font-size: var(--text-2xs);
+  }
+
+  .b2-toast-container {
+    top: var(--space-2);
+    left: var(--space-2);
+    right: var(--space-2);
+  }
+}

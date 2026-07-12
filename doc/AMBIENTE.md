@@ -46,8 +46,8 @@ Os comandos abaixo foram padronizados no arquivo raiz `package.json` para facili
 ### 3. Mobile (Capacitor)
 * **Como funciona**: O Capacitor sincroniza os arquivos compilados do diretório web principal com as pastas de ativos nativos (`android/app/src/main/assets/public` ou `ios/App/App/public`).
 * **Como recarregar**: 
-  - Sempre que alterar o código web, você pode sincronizar usando `npx cap sync --project apps/mobile`.
-  - Se estiver rodando o aplicativo em modo live-reload, use a flag `--live-reload` (ex: `npx cap run android --live-reload --external`). Isso fará com que o WebView nativo aponte diretamente para o IP do seu servidor de desenvolvimento local, permitindo atualizações automáticas e em tempo real na tela do celular.
+  - Sempre que alterar o código web, você pode sincronizar entrando na pasta do app mobile e executando o sync: `cd apps/mobile && npx cap sync`.
+  - Se estiver rodando o aplicativo em modo live-reload, use a flag `--live-reload` (ex: `cd apps/mobile && npx cap run android --live-reload --external`). Isso fará com que o WebView nativo aponte diretamente para o IP do seu servidor de desenvolvimento local, permitindo atualizações automáticas e em tempo real na tela do celular.
 
 ---
 

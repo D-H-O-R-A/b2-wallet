@@ -7,14 +7,8 @@
  * Implements 100% mock-free mainnet support for Polkadot (DOT) and Asset Hub parachain.
  * Fully compliant with Chrome Extension Manifest V3 (pure JS, zero unsafe-eval / WebAssembly blocks).
  *
- * Features:
- *   - BIP-44 sr25519 Key derivation matching Polkadot.js / Talisman / Nova / SubWallet.
- *   - SS58 Prefix 0 (Unified Address Identity) for both Relay Chain and Asset Hub.
- *   - Runtime Evolution Protection: Dynamic discovery of pallet methods and call structures.
- *   - Dynamic On-Chain Asset Discovery on Asset Hub (not restricted to USDT/USDC).
- *   - Dual NFT pallet discovery (pallet-nfts & pallet-uniques).
- *   - Staking actions: bond, bondExtra, unbond, nominate, withdrawUnbonded.
- *   - Multi-backend failover for balance querying, transacting, and transaction histories.
+ * Delegates Staking, NFT, and History providers to submodules under src/js/crypto/polkadot/
+ * for ultra-clean modular architecture.
  */
 
 ;(function(global) {
@@ -83,39 +77,26 @@
   // ─────────────────────────────────────────────────────────────────────────────
 
   const PolkadotProvider = {
-    /**
-     * Retrieves DOT balances (free, reserved, frozen, spendable) dynamically.
-     */
     async getBalance(address) {
       try {
         const api = await getDotApi();
-        // Dynamic lookup preserving Runtime Evolution Protection
         const accountInfo = await api.query.system.account(address);
         
         const free = accountInfo.data.free.toString();
         const reserved = accountInfo.data.reserved.toString();
         const frozen = accountInfo.data.frozen ? accountInfo.data.frozen.toString() : '0';
         
-        // Calculate spendable balance: free - frozen
         const frozenBN = accountInfo.data.frozen || api.registry.createType('Balance', 0);
         const spendableBN = accountInfo.data.free.sub(frozenBN);
         const spendable = spendableBN.gt(api.registry.createType('Balance', 0)) ? spendableBN.toString() : '0';
 
-        return {
-          free,
-          reserved,
-          frozen,
-          spendable
-        };
+        return { free, reserved, frozen, spendable };
       } catch (err) {
         console.error('[PolkadotProvider] getBalance failed:', err.message);
         throw err;
       }
     },
 
-    /**
-     * Retrieves the next nonce for transaction ordering.
-     */
     async getNonce(address) {
       try {
         const api = await getDotApi();
@@ -129,15 +110,10 @@
       }
     },
 
-    /**
-     * Estimates live transaction fees using paymentInfo.
-     */
     async estimateFee(address, recipient, amountDecimal) {
       try {
         const api = await getDotApi();
         const plancks = Math.floor(amountDecimal * 10000000000).toString();
-        
-        // Build dynamic dummy extrinsic
         const tx = api.tx.balances.transferKeepAlive(recipient, plancks);
         const info = await tx.paymentInfo(address);
         return info.partialFee.toString();
@@ -147,9 +123,6 @@
       }
     },
 
-    /**
-     * Signs a DOT transfer transaction.
-     */
     async signTransaction(mnemonic, recipient, amountDecimal, nonce, index = 0) {
       const { Keyring, cryptoWaitReady } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
       await cryptoWaitReady();
@@ -162,34 +135,24 @@
       const plancks = Math.floor(amountDecimal * 10000000000).toString();
       const tx = api.tx.balances.transferKeepAlive(recipient, plancks);
 
-      await tx.signAsync(pair, { nonce, era: 0 }); // Use immortal era
+      await tx.signAsync(pair, { nonce, era: 0 });
       return {
         hex: tx.toHex(),
         hash: tx.hash.toHex()
       };
     },
 
-    /**
-     * Broadcasts a signed transaction and returns finalization hash.
-     */
     async broadcastTransaction(signedTxHex) {
       const api = await getDotApi();
       return new Promise((resolve, reject) => {
-        // Fallback for stateless HTTP connection types where ws subscription is absent
         api.rpc.author.submitExtrinsic(signedTxHex)
           .then(async (txHash) => {
             const txHashHex = txHash.toHex();
-            console.log('[PolkadotProvider] Extrinsic submitted successfully. Hash:', txHashHex);
-            
-            // Poll for inclusion/finalization to support pure HTTP environments
             let checks = 0;
             const interval = setInterval(async () => {
               checks++;
               try {
                 const blockHeader = await api.rpc.chain.getHeader();
-                console.log(`[PolkadotProvider] Tracking finalization... Current Block: #${blockHeader.number.toNumber()}`);
-                
-                // Once block shifts, we resolve happily (or after 5 iterations as dry-run validation)
                 if (checks >= 3) {
                   clearInterval(interval);
                   resolve({
@@ -210,9 +173,6 @@
       });
     },
 
-    /**
-     * Cryptographically signs a message using sr25519.
-     */
     async signMessage(mnemonic, message, index = 0) {
       const { Keyring, cryptoWaitReady, stringToU8a, u8aToHex } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
       await cryptoWaitReady();
@@ -226,9 +186,6 @@
       return u8aToHex(signature);
     },
 
-    /**
-     * Verifies an sr25519 signature.
-     */
     verifyMessage(message, signature, publicKeyHex) {
       const { signatureVerify, hexToU8a, stringToU8a } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
       if (!signatureVerify) return false;
@@ -246,27 +203,18 @@
   // ─────────────────────────────────────────────────────────────────────────────
 
   const AssetHubProvider = {
-    /**
-     * Dynamically discovers all on-chain assets registered in the Asset Hub.
-     */
     async discoverAllAssets(address) {
       try {
         const api = await getAssetHubApi();
-        // Dynamic registry query preserving Runtime Evolution Protection
         const assetKeys = await api.query.assets.asset.keys();
         const assetIds = assetKeys.map(key => key.args[0].toNumber());
 
-        if (assetIds.length === 0) {
-          return [];
-        }
+        if (assetIds.length === 0) return [];
 
-        // Batch query all accounts for all assets in a single RPC request
         const accountQueries = assetIds.map(id => [api.query.assets.account, [id, address]]);
         const accounts = await api.queryMulti(accountQueries);
-
         const discovered = [];
 
-        // Loop through the results and only query metadata for assets that actually have balances
         for (let i = 0; i < assetIds.length; i++) {
           const accountOpt = accounts[i];
           if (accountOpt && accountOpt.isSome) {
@@ -274,7 +222,6 @@
             const accData = accountOpt.unwrap();
             const balanceStr = accData.balance.toString();
 
-            // Skip zero-balance accounts
             if (balanceStr === '0') continue;
 
             const metadata = await api.query.assets.metadata(assetId);
@@ -299,9 +246,6 @@
       }
     },
 
-    /**
-     * Transfers registered assets on Asset Hub with dynamic method matching.
-     */
     async signAssetTransfer(mnemonic, assetId, recipient, amountDecimal, index = 0) {
       const { Keyring, cryptoWaitReady } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
       await cryptoWaitReady();
@@ -315,7 +259,6 @@
       const decimals = metadata.decimals.toNumber();
       const rawAmount = Math.floor(amountDecimal * Math.pow(10, decimals)).toString();
 
-      // Runtime Evolution Protection: Detect optimal transfer method dynamically
       let tx;
       if (api.tx.assets.transferKeepAlive) {
         tx = api.tx.assets.transferKeepAlive(assetId, recipient, rawAmount);
@@ -325,7 +268,6 @@
         throw new Error('[AssetHubProvider] No suitable assets pallet transfer method discovered on runtime.');
       }
 
-      // Query nonce dynamically
       const nextIndex = await api.rpc.system.accountNextIndex(pair.address);
       await tx.signAsync(pair, { nonce: nextIndex, era: 0 });
 
@@ -351,319 +293,48 @@
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
-  // STAKING PROVIDER (NOMINATIONS, LEDGERS & FLEXIBLE BOND ACTIONS)
+  // SUBMODULE RESOLVERS
   // ─────────────────────────────────────────────────────────────────────────────
+
+  function getStakingSubmodule() {
+    const sub = global.B2PolkadotStakingProvider || 
+                (global.window && global.window.B2PolkadotStakingProvider) || 
+                (typeof window !== 'undefined' && window.B2PolkadotStakingProvider);
+    if (!sub) throw new Error("B2PolkadotStakingProvider submodule is not loaded");
+    return sub;
+  }
+
+  function getHistorySubmodule() {
+    const sub = global.B2PolkadotHistoryProvider || 
+                (global.window && global.window.B2PolkadotHistoryProvider) || 
+                (typeof window !== 'undefined' && window.B2PolkadotHistoryProvider);
+    if (!sub) throw new Error("B2PolkadotHistoryProvider submodule is not loaded");
+    return sub;
+  }
+
+  function getNFTSubmodule() {
+    const sub = global.B2PolkadotNFTProvider || 
+                (global.window && global.window.B2PolkadotNFTProvider) || 
+                (typeof window !== 'undefined' && window.B2PolkadotNFTProvider);
+    if (!sub) throw new Error("B2PolkadotNFTProvider submodule is not loaded");
+    return sub;
+  }
 
   const PolkadotStakingProvider = {
-    /**
-     * Queries active bonding, ledger limits, active validations and nominators.
-     */
-    async getStakingStatus(address) {
-      try {
-        const api = await getDotApi();
-        
-        // 1. Bonded stash-to-controller mapping
-        const bondedOpt = await api.query.staking.bonded(address);
-        const controller = bondedOpt.isSome ? bondedOpt.unwrap().toString() : address;
-
-        // 2. Active staking ledger
-        const ledgerOpt = await api.query.staking.ledger(controller);
-        let activeStake = '0';
-        let totalBonded = '0';
-        let unlocking = [];
-
-        if (ledgerOpt.isSome) {
-          const ledger = ledgerOpt.unwrap();
-          activeStake = ledger.active.toString();
-          totalBonded = ledger.total.toString();
-          unlocking = ledger.unlocking.toJSON();
-        }
-
-        // 3. Current active nominations
-        const nominatorsOpt = await api.query.staking.nominators(address);
-        let targets = [];
-        if (nominatorsOpt.isSome) {
-          targets = nominatorsOpt.unwrap().targets.toJSON();
-        }
-
-        // 4. Retrieve pending rewards (estimated via nominators last active block info)
-        let rewards = '0'; // Dynamic staking rewards are aggregated on-chain in blocks
-
-        return {
-          controller,
-          totalBonded,
-          activeStake,
-          unlocking,
-          nominations: targets,
-          pendingRewards: rewards,
-          status: targets.length > 0 ? 'active' : 'idle'
-        };
-      } catch (err) {
-        console.error('[PolkadotStakingProvider] getStakingStatus failed:', err.message);
-        return {
-          controller: address,
-          totalBonded: '0',
-          activeStake: '0',
-          unlocking: [],
-          nominations: [],
-          pendingRewards: '0',
-          status: 'inactive'
-        };
-      }
-    },
-
-    /**
-     * Dynamic Bond operation aligning with Runtime Evolution Protection.
-     */
-    async bond(mnemonic, amountDecimal, rewardDestination = 'Staked', index = 0) {
-      const { Keyring, cryptoWaitReady } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
-      await cryptoWaitReady();
-
-      const keyring = new Keyring({ type: 'sr25519' });
-      const pathStr = `${mnemonic}//44'/354'/${index}'/0'/0'`;
-      const pair = keyring.addFromUri(pathStr);
-
-      const api = await getDotApi();
-      const plancks = Math.floor(amountDecimal * 10000000000).toString();
-
-      // Runtime Evolution Protection: Detect bond arguments count dynamically
-      let tx;
-      const bondMethod = api.tx.staking.bond;
-      if (bondMethod.meta.args.length === 2) {
-        // Modern runtime: bond(value, payee)
-        tx = bondMethod(plancks, rewardDestination);
-      } else {
-        // Legacy runtime: bond(controller, value, payee)
-        tx = bondMethod(pair.address, plancks, rewardDestination);
-      }
-
-      const nextIndex = await api.rpc.system.accountNextIndex(pair.address);
-      await tx.signAsync(pair, { nonce: nextIndex, era: 0 });
-      return await api.rpc.author.submitExtrinsic(tx.toHex());
-    },
-
-    /**
-     * Increments bonded amount.
-     */
-    async bondExtra(mnemonic, amountDecimal, index = 0) {
-      const { Keyring, cryptoWaitReady } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
-      await cryptoWaitReady();
-
-      const keyring = new Keyring({ type: 'sr25519' });
-      const pathStr = `${mnemonic}//44'/354'/${index}'/0'/0'`;
-      const pair = keyring.addFromUri(pathStr);
-
-      const api = await getDotApi();
-      const plancks = Math.floor(amountDecimal * 10000000000).toString();
-      const tx = api.tx.staking.bondExtra(plancks);
-
-      const nextIndex = await api.rpc.system.accountNextIndex(pair.address);
-      await tx.signAsync(pair, { nonce: nextIndex, era: 0 });
-      return await api.rpc.author.submitExtrinsic(tx.toHex());
-    },
-
-    /**
-     * Unbonds active stake.
-     */
-    async unbond(mnemonic, amountDecimal, index = 0) {
-      const { Keyring, cryptoWaitReady } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
-      await cryptoWaitReady();
-
-      const keyring = new Keyring({ type: 'sr25519' });
-      const pathStr = `${mnemonic}//44'/354'/${index}'/0'/0'`;
-      const pair = keyring.addFromUri(pathStr);
-
-      const api = await getDotApi();
-      const plancks = Math.floor(amountDecimal * 10000000000).toString();
-      const tx = api.tx.staking.unbond(plancks);
-
-      const nextIndex = await api.rpc.system.accountNextIndex(pair.address);
-      await tx.signAsync(pair, { nonce: nextIndex, era: 0 });
-      return await api.rpc.author.submitExtrinsic(tx.toHex());
-    },
-
-    /**
-     * Nominates list of active validators.
-     */
-    async nominate(mnemonic, validatorsArray, index = 0) {
-      const { Keyring, cryptoWaitReady } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
-      await cryptoWaitReady();
-
-      const keyring = new Keyring({ type: 'sr25519' });
-      const pathStr = `${mnemonic}//44'/354'/${index}'/0'/0'`;
-      const pair = keyring.addFromUri(pathStr);
-
-      const api = await getDotApi();
-      const tx = api.tx.staking.nominate(validatorsArray);
-
-      const nextIndex = await api.rpc.system.accountNextIndex(pair.address);
-      await tx.signAsync(pair, { nonce: nextIndex, era: 0 });
-      return await api.rpc.author.submitExtrinsic(tx.toHex());
-    },
-
-    /**
-     * Reclaims fully unlocked, unbonded balances.
-     */
-    async withdrawUnbonded(mnemonic, index = 0) {
-      const { Keyring, cryptoWaitReady } = globalThis.PolkadotCrypto || window.PolkadotCrypto || {};
-      await cryptoWaitReady();
-
-      const keyring = new Keyring({ type: 'sr25519' });
-      const pathStr = `${mnemonic}//44'/354'/${index}'/0'/0'`;
-      const pair = keyring.addFromUri(pathStr);
-
-      const api = await getDotApi();
-      
-      // Query slashing spans dynamically
-      const spansOpt = await api.query.staking.slashingSpans(pair.address);
-      const spansCount = spansOpt.isSome ? spansOpt.unwrap().spanIndex.toNumber() : 0;
-      
-      const tx = api.tx.staking.withdrawUnbonded(spansCount);
-
-      const nextIndex = await api.rpc.system.accountNextIndex(pair.address);
-      await tx.signAsync(pair, { nonce: nextIndex, era: 0 });
-      return await api.rpc.author.submitExtrinsic(tx.toHex());
-    }
+    getStakingStatus(address) { return getStakingSubmodule().getStakingStatus(address); },
+    bond(m, val, p, i) { return getStakingSubmodule().bond(m, val, p, i); },
+    bondExtra(m, val, i) { return getStakingSubmodule().bondExtra(m, val, i); },
+    unbond(m, val, i) { return getStakingSubmodule().unbond(m, val, i); },
+    nominate(m, v, i) { return getStakingSubmodule().nominate(m, v, i); },
+    withdrawUnbonded(m, i) { return getStakingSubmodule().withdrawUnbonded(m, i); }
   };
-
-  // ─────────────────────────────────────────────────────────────────────────────
-  // TRANSACTION HISTORY PROVIDER (PRIORITIZED MULTI-BACKEND FAILOVER)
-  // ─────────────────────────────────────────────────────────────────────────────
 
   const PolkadotHistoryProvider = {
-    /**
-     * Queries and normalizes transactions through multiple prioritized backends.
-     */
-    async getHistory(address) {
-      // Priority 1: Subscan API
-      try {
-        console.log('[PolkadotHistory] Priority 1 — Querying Subscan...');
-        const res = await fetch('https://polkadot.api.subscan.io/api/v2/scan/transfers', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ address, row: 10, page: 0 })
-        });
-        const json = await res.json();
-        if (json && json.data && json.data.transfers) {
-          return json.data.transfers.map(tx => ({
-            hash: tx.hash,
-            block: tx.block_num,
-            timestamp: tx.block_timestamp * 1000,
-            from: tx.from,
-            to: tx.to,
-            amount: Number(tx.amount),
-            fee: Number(tx.fee || 0),
-            status: tx.success ? 'success' : 'failed'
-          }));
-        }
-      } catch (e) {
-        console.warn('[PolkadotHistory] Subscan provider failed, switching to Statescan:', e.message);
-      }
-
-      // Priority 2: Statescan API
-      try {
-        console.log('[PolkadotHistory] Priority 2 — Querying Statescan...');
-        const res = await fetch(`https://polkadot.statescan.io/api/accounts/${address}/transfers?page_size=10`);
-        const json = await res.json();
-        if (json && json.items) {
-          return json.items.map(tx => ({
-            hash: tx.extrinsicHash,
-            block: tx.indexer?.blockHeight,
-            timestamp: tx.indexer?.blockTime,
-            from: tx.from,
-            to: tx.to,
-            amount: Number(tx.balance) / 10000000000,
-            fee: Number(tx.fee || 0) / 10000000000,
-            status: tx.isSuccess ? 'success' : 'failed'
-          }));
-        }
-      } catch (e) {
-        console.warn('[PolkadotHistory] Statescan provider failed, switching to OnFinality/RPC fallbacks:', e.message);
-      }
-
-      // Priority 3 & 4: OnFinality / Local RPC Scanning (Returns empty formatted history to prevent app crash)
-      return [];
-    }
+    getHistory(address) { return getHistorySubmodule().getHistory(address); }
   };
 
-  // ─────────────────────────────────────────────────────────────────────────────
-  // NFT PROVIDER (EXTENSIBLE DUAL-PALLET DECORATION)
-  // ─────────────────────────────────────────────────────────────────────────────
-
   const PolkadotNFTProvider = {
-    /**
-     * Discovers all owned collections and items on Asset Hub.
-     */
-    async discoverNFTs(address) {
-      try {
-        const api = await getAssetHubApi();
-        const discovered = [];
-
-        // 1. Primary: pallet-nfts
-        if (api.query.nfts && typeof api.query.nfts.account?.entries === 'function') {
-          console.log('[PolkadotNFTProvider] Querying pallet-nfts...');
-          const nftEntries = await api.query.nfts.account.entries(address);
-          
-          for (const [key, value] of nftEntries) {
-            const collectionId = key.args[1].toNumber();
-            const itemId = key.args[2].toNumber();
-            
-            // Query metadata dynamically
-            const metadataOpt = await api.query.nfts.itemMetadataOf(collectionId, itemId);
-            let name = `NFT Item #${itemId}`;
-            let description = '';
-            
-            if (metadataOpt.isSome) {
-              const data = metadataOpt.unwrap();
-              name = data.name.toUtf8() || name;
-              description = data.description?.toUtf8() || '';
-            }
-
-            discovered.push({
-              id: `${collectionId}-${itemId}`,
-              collectionId,
-              itemId,
-              name,
-              description,
-              pallet: 'nfts',
-              chainKey: 'POLKADOT'
-            });
-          }
-        }
-
-        // 2. Fallback: pallet-uniques (query legacy uniques if pallet-nfts results are empty)
-        if (discovered.length === 0 && api.query.uniques && typeof api.query.uniques.account?.entries === 'function') {
-          console.log('[PolkadotNFTProvider] Querying pallet-uniques fallback...');
-          const uniqueEntries = await api.query.uniques.account.entries(address);
-
-          for (const [key, value] of uniqueEntries) {
-            const collectionId = key.args[1].toNumber();
-            const itemId = key.args[2].toNumber();
-
-            const metadataOpt = await api.query.uniques.instanceMetadataOf(collectionId, itemId);
-            let name = `Legacy NFT #${itemId}`;
-
-            if (metadataOpt.isSome) {
-              name = metadataOpt.unwrap().data.toUtf8() || name;
-            }
-
-            discovered.push({
-              id: `${collectionId}-${itemId}`,
-              collectionId,
-              itemId,
-              name,
-              pallet: 'uniques',
-              chainKey: 'POLKADOT'
-            });
-          }
-        }
-
-        return discovered;
-      } catch (err) {
-        console.error('[PolkadotNFTProvider] discoverNFTs failed:', err.message);
-        return [];
-      }
-    }
+    discoverNFTs(address) { return getNFTSubmodule().discoverNFTs(address); }
   };
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -679,5 +350,9 @@
     getDotApi,
     getAssetHubApi
   };
+
+  if (global.window) {
+    global.window.B2PolkadotEngine = global.B2PolkadotEngine;
+  }
 
 })(typeof window !== 'undefined' ? window : (typeof global !== 'undefined' ? global : globalThis));
